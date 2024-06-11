@@ -250,40 +250,6 @@ pcoa_plot <- ggplot() +
         "#0091B5",
         "#010A4E"))
 
-# ggsave(plot = pcoa_plot, filename = "plots/KLGPG_221206/pcoa_visit_v2.pdf", width = 5, height = 5)
-# pcoa_plot <- ggplot() +
-#     geom_point(data = pcoa, aes(x = V1, y = V2, color = visit)) +
-#     theme_classic() +
-#     xlab("PCo 1") +
-#     ylab("PCo 2")
-
-# ggsave(plot = pcoa_plot, filename = "plots/KLGPG_221206/pcoa_visit_v1.pdf", width = 5, height = 5)
-
-# pcoa_plot <- ggplot() +
-#     geom_point(data = pcoa %>%
-#     filter(visit != 3), aes(x = V1, y = V2, color = visit)) +
-#     theme_classic() +
-#     xlab("PCo 1") +
-#     ylab("PCo 2")
-
-# ggsave(plot = pcoa_plot, filename = "plots/KLGPG_221206/pcoa_visit_v2_visit_3_removed.pdf", width = 5, height = 5)
-
-# pcoa_plot <- ggplot() +
-#     geom_point(data = pcoa %>%
-#     filter(visit != 3) %>%
-#     mutate(visit = as.numeric(as.character(visit))) %>%
-#     mutate(treatment = case_when(visit <= 2 ~ "before\ntransplantation",
-#                                  visit > 2 ~ "after\ntransplanation")) %>%
-#         mutate(treatment = case_when(visit <= 2 ~ "pre-transplant",
-#                                  visit > 2 ~ "post-transplant")) %>%
-#     mutate(treatment = factor(treatment, levels = c("pre-transplant", 'post-transplant'))), aes(x = V1, y = V2, color = treatment)) +
-#     theme_classic() +
-#     theme(legend.title = element_text(size = 0), legend.text = element_text(size = 12)) +
-#     xlab("PCo 1") +
-#     ylab("PCo 2")
-
-# ggsave(plot = pcoa_plot, filename = "plots/KLGPG_221206/pcoa_visit_v3_visit_3_removed_treatment_dichotomized.pdf", width = 6.25, height = 4.25)
-
 
 
 add_line_with_ind <- function(pObj = NULL, dataB = NULL, indName = NULL) {
