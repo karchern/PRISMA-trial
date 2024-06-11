@@ -1794,8 +1794,8 @@ colorVecGreen <- colorRampPalette(c(groupColors[2], "white"))(length(quantiles))
 ## IMPORTANT: Choose visitType to make sure you're correlating/looking at the right thing
 ############################################################################################
 
-visitType <- "visit"
-# visitType <- "visitMinusOne"
+#visitType <- "visit"
+visitType <- "visitMinusOne"
 genusProfiles <- profiles %>%
     mutate(relAb = (10^relAb) - pseudoCount) %>%
     mutate(taxa = .data[[taxLevel]]) %>%
@@ -1915,7 +1915,6 @@ for (g in list(
     c("Clostridium", "rejection"),
     c("Alistipes", "rejection")
 )) {
-    print(g)
     taxon <- g[1]
     complication <- g[2]
     dir.create(str_c("/g/scb/zeller/karcher/PRISMA/plots/KLGPG_221206/complication_LMMs_results/", complication), showWarnings = FALSE)
