@@ -2051,7 +2051,8 @@ cdModelDataSmall$firstAlbuminMeasurement[is.na(cdModelDataSmall$firstAlbuminMeas
 #     formula= cdMetabolism ~ cyp3a5star3 + firstAlbuminMeasurement + ageCategorical + firstHematocritMeasurement, family = 'binomial', maxit = 100000)
 # cdModelSmall <- randomForest(cdMetabolism ~ cyp3a5star3 + firstAlbuminMeasurement + ageCategorical + firstHematocritMeasurement, data=cdModelDataSmall, proximity=TRUE)
 library(randomForest)
-summary(cdModelSmall)
+library(pROC)
+# summary(cdModelSmall)
 
 ps <- list()
 set.seed(2)
@@ -2065,10 +2066,9 @@ for (patientID in cdModelDataSmall$patientID) {
 rocObjectModelSmall <- roc(predictor = unlist(ps), response = as.numeric(cdModelDataSmall$cdMetabolism))
 rocObjectModelSmall
 
-res <- list()
 preTransplantProfiles <- profiles %>%
     inner_join(data.frame(visit = c(1))) %>%
-    inner_join(importantTaxa %>% rename(genus = taxa))
+    inner_join(rbind(importantTaxa, data.frame(taxa = 'Erysipelatoclostridium')) %>% rename(genus = taxa))
 # preTransplantProfiles <- profiles %>%
 #     inner_join(data.frame(visit = c(1))) %>%
 #     group_by(sampleID, family, relAb, PSN, visit) %>%
@@ -2087,6 +2087,7 @@ preTransplantProfiles <- profiles %>%
 
 # This doesn't really make much sense anymore, and is also overfitting (see later)
 modelDataAll <- list()
+res <- list()
 for (g in unique(preTransplantProfiles$genus)) {
     # for (g in unique(preTransplantProfiles$family)) {
     # for (g in unique(preTransplantProfiles$phylum)) {
@@ -2163,7 +2164,7 @@ for (g in c("Erysipelatoclostridium", "Enterococcus", "Roseburia", "Coprococcus"
 ggsave(plot = wrap_plots(plots, guides = 'collect', nrow = 1),
     filename = "/g/scb/zeller/karcher/PRISMA/plots/KLGPG_221206/cd_metabolism_hits.pdf", width = 9, height = 3.5)
 
-candidateGenera <- c("Erysipelatoc.", "Enterococcus", "Roseburia", "Coprococcus")
+candidateGenera <- c("Erysipelatoclistridium", "Enterococcus", "Roseburia", "Coprococcus")
 
 cdModelDataBig <- cdModelDataSmall %>%
     left_join(preTransplantProfiles %>%
@@ -2270,7 +2271,6 @@ ggsave(
 
 
 library(pROC)
-
 
 # cdModelDataBig %>%
 #     select(patientID, Roseburia, Enterococcus, `Erysipelatoc.`, Coprococcus) %>%
