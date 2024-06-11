@@ -1,0 +1,564 @@
+Variable Name	Variable Label	Data Type	Comment	Relevant	Value Labels
+v250b_Cyclosporine_na	Cyclosporine [µg/l] NA	;"";0;"NA"	NA	FALSE	Cyclosporine (range: 50-350, unit: µg/l) Not applicable
+v251b_Everolimus_na	Everolimus [µg/l] NA	;"";0;"NA"	NA	FALSE	Everolimus (range: 2-10, unit: µg/l) Not applicable
+v252b_Mycophenolic_acid_na	Mycophenolic acid [mg/l] NA	;"";0;"NA"	NA	FALSE	Mycophenolic acid (range: 1-7, unit: mg/l) Not applicable
+v253b_Sirolimus_na	Sirolimus [ng/ml] NA	;"";0;"NA"	NA	FALSE	Sirolimus (range: 2-15, unit: ng/ml) Not applicable
+v254b_Tacrolimus_na	Tacrolimus [µg/l] NA	;"";0;"NA"	NA	FALSE	Tacrolimus (range: 3-17, unit: µg/l Not applicable
+v255b_AUC_MPA_na	AUC MPA [mg*h/l] NA	;"";0;"NA"	NA	FALSE	AUC MPA (range: 10-200, unit: mg*h/l) Not applicable
+v256b_AUC_Tacrolimus_na	AUC Tacrolimus [µg*h/l] NA	;"";0;"NA"	NA	FALSE	AUC Tacrolimus (range: 20-250, unit: µg*h/l) Not applicable
+v257b_Cystatine _na	Cystatine C [mg/l] NA	;"";0;"NA"	NA	FALSE	Cystatine C (range: 0.4- 1.5, unit: mg/l) Not applicable
+v258b_eGFR_na	eGFR [ml/min/qm] NA	;"";0;"NA"	NA	FALSE	eGFR (range: 10-150 ml/min/qm) Not applicable
+v259b_Creatinine_na	Creatinine [mg/dl] NA	;"";0;"NA"	NA	FALSE	Creatinine (range: 0.1-5, unit: mg/dl) Not applicable
+v260b_Leucocytes_na	Leucocytes [/nl] NA	;"";0;"NA"	NA	FALSE	Leucocytes (Range: 3-16, unit: /nl) Not applicable
+v261b_Erythrocytes_na	Erythrocytes [/pl] NA	;"";0;"NA"	NA	FALSE	Erythrocytes (Range: 3-7, unit: /pl) Not applicable
+v262b_Hemoglobin_na	Hemoglobin [/pl] NA	;"";0;"NA"	NA	FALSE	Hemoglobin (Range: 8-17, unit: /pl) Not applicable
+v263b_Hematocrit_na	Hematocrit [l/l] NA	;"";0;"NA"	NA	FALSE	Hematocrit (range: 0.2-0.6, unit: l/l) Not applicable
+v264b_Thrombocytes_na	Thrombocytes [/nl] NA	;"";0;"NA"	NA	FALSE	Thrombocytes (range: 120-520, unit: /nl) Not applicable
+v265b_Albumin_na	Albumin [g/l] NA	;"";0;"NA"	NA	FALSE	Albumin (range: 25-60, unit: g/l) Not applicable
+v266b_GOT_na	GOT [U/l] NA	;"";0;"NA"	NA	FALSE	GOT (range: 5-60, unit: U/l) Not applicable
+v267b_GPT_na	GPT  [U/l] NA	;"";0;"NA"	NA	FALSE	GPT  (range: 5-70, unit: U/l) Not applicable
+v138_change_immunosupp	Change of Immunosuppressive Regimen	;"";1;"Yes";0;"No"	outcome_info	TRUE	
+v550_current_treatment	Current Treatment	;"";1;"Yes";0;"No"	immunosuppression_info	TRUE	
+v100_treat_Antithymocite	Antithymocite globulin 	Box	outcome_info	TRUE	
+v101_treat_Rituximab	Rituximab	Box	outcome_info	TRUE	
+v102_treat_Intensification	Intensification of immunosuppressive therapy	Box	outcome_info	TRUE	
+v103_treat_other	Other (free text)	Box	outcome_info	TRUE	
+v105a_Azathioprin	Azathioprin	Box	immunosuppression_info	TRUE	
+v106a_Cyclosporine	Cyclosporine	Box	immunosuppression_info	TRUE	
+v107a_Everolimus	Everolimus	Box	immunosuppression_info	TRUE	
+v108a_Glucocorticoid	Glucocorticoid	Box	immunosuppression_info	TRUE	
+v109a_Mycophenolate_Mofetil	Mycophenolate Mofetil	Box	immunosuppression_info	TRUE	
+v110a_Mycophenolate_Sodium	Mycophenolate Sodium	Box	immunosuppression_info	TRUE	
+v111a_Sirolimus	Sirolimus	Box	immunosuppression_info	TRUE	
+v112a_Tacrolimus_Prograf	Tacrolimus - Prograf	Box	immunosuppression_info	TRUE	
+v113a_Tacrolimus_Envarsus	Tacrolimus - Envarsus	Box	immunosuppression_info	TRUE	
+v114a_Tacrolimus_Advagraf	Tacrolimus - Advagraf	Box	immunosuppression_info	TRUE	
+v115a_Other_immunosuppression	Other Immunosuppression	Box	immunosuppression_info	TRUE	
+v116a_Azathioprin_introduced	Azathioprin	Box	outcome_info	TRUE	
+v117a_Cyclosporine_introduced	Cyclosporine	Box	outcome_info	TRUE	
+v118a_Everolimus_introduced	Everolimus	Box	outcome_info	TRUE	
+v119a_Glucocorticoid_introduced	Glucocorticoid	Box	outcome_info	TRUE	
+v120a_Mycophenolate_Mofetil_introduced	Mycophenolate Mofetil	Box	outcome_info	TRUE	
+v121a_Mycophenolate_Sodium_introduced	Mycophenolate Sodium	Box	outcome_info	TRUE	
+v122a_Sirolimus_introduced	Sirolimus	Box	outcome_info	TRUE	
+v123a_Tacrolimus_Prograf_introduced	Tacrolimus - Prograf	Box	outcome_info	TRUE	
+v124a_Tacrolimus_Envarsus_introduced	Tacrolimus - Envarsus	Box	outcome_info	TRUE	
+v125a_Tacrolimus_Advagraf_introduced	Tacrolimus - Advagraf	Box	outcome_info	TRUE	
+v126a_Azathioprin_discontinued	Azathioprin	Box	outcome_info	TRUE	
+v127a_Cyclosporine_discontinued	Cyclosporine	Box	outcome_info	TRUE	
+v128a_Everolimus_discontinued	Everolimus	Box	outcome_info	TRUE	
+v129a_Glucocorticoid_discontinued	Glucocorticoid	Box	outcome_info	TRUE	
+v130a_Mycophenolate_Mofetil_discontinued	Mycophenolate Mofetil	Box	outcome_info	TRUE	
+v131a_Mycophenolate_Sodium_discontinued	Mycophenolate Sodium	Box	outcome_info	TRUE	
+v132a_Sirolimus_discontinued	Sirolimus	Box	outcome_info	TRUE	
+v133a_Tacrolimus_Prograf_discontinued	Tacrolimus - Prograf	Box	outcome_info	TRUE	
+v134a_Tacrolimus_Envarsus_discontinued	Tacrolimus - Envarsus	Box	outcome_info	TRUE	
+v135a_Tacrolimus_Advagraf_discontinued	Tacrolimus - Advagraf	Box	outcome_info	TRUE	
+v136a_Other_discontinued	Other Discontinued	Box	outcome_info	TRUE	
+v137a_Other_introduced	Other Introduced	Box	outcome_info	TRUE	
+v139_reason_Efficacy	Efficacy	Box	outcome_info	TRUE	
+v140a_reason_toxicity_gastro	Toxicity Gastrointestinal	Box	outcome_info	TRUE	
+v141_reason_Compliance	Compliance	Box	outcome_info	TRUE	
+v142_reason_Polyomavirus	Polyomavirus infection	Box	outcome_info	TRUE	
+v143a_reason_Other	Other Reasons Change	Box	outcome_info	TRUE	
+v150a_Ampicilin	Ampicilin	BOX	antibiotics	TRUE	
+v150d_Ampicilin_Ongoing	Ampicilin Ongoing	BOX	antibiotics	TRUE	
+v151a_Ampicillin_Sulbactam	Ampicillin_Sulbactam	BOX	antibiotics	TRUE	
+v151d_Ampicillin_Sulbactam_Ongoing	Ampicillin_Sulbactam Ongoing	BOX	antibiotics	TRUE	
+v152a_Azitromycin	Azitromycin	BOX	antibiotics	TRUE	
+v152d_Azitromycin_Ongoing	Azitromycin Ongoing	BOX	antibiotics	TRUE	
+v153a_Cefepim	Cefepim	BOX	antibiotics	TRUE	
+v153d_Cefepim_Ongoing	Cefepim Ongoing	BOX	antibiotics	TRUE	
+v154a_Ceftazidim	Ceftazidim	BOX	antibiotics	TRUE	
+v154d_Ceftazidim_Ongoing	Ceftazidim Ongoing	BOX	antibiotics	TRUE	
+v155a_Ceftriaxon	Ceftriaxon	BOX	antibiotics	TRUE	
+v155d_Ceftriaxon_Ongoing	Ceftriaxon Ongoing	BOX	antibiotics	TRUE	
+v156a_Cefuroxim	Cefuroxim	BOX	antibiotics	TRUE	
+v156d_Cefuroxim_Ongoing	Cefuroxim Ongoing	BOX	antibiotics	TRUE	
+v157a_Ciprofloxacin	Ciprofloxacin	BOX	antibiotics	TRUE	
+v157d_Ciprofloxacin_Ongoing	Ciprofloxacin Ongoing	BOX	antibiotics	TRUE	
+v158a_Clarithromycin	Clarithromycin	BOX	antibiotics	TRUE	
+v158d_Clarithromycin_Ongoing	Clarithromycin Ongoing	BOX	antibiotics	TRUE	
+v159a_Clindamycin	Clindamycin	BOX	antibiotics	TRUE	
+v159d_Clindamycin_Ongoing	Clindamycin Ongoing	BOX	antibiotics	TRUE	
+v160a_Cotrimoxazol	Cotrimoxazol	BOX	antibiotics	TRUE	
+v160d_Cotrimoxazol_Ongoing	Cotrimoxazol Ongoing	BOX	antibiotics	TRUE	
+v161a_Doxycyclin	Doxycyclin	BOX	antibiotics	TRUE	
+v161d_Doxycyclin_Ongoing	Doxycyclin Ongoing	BOX	antibiotics	TRUE	
+v162a_Ertapenem	Ertapenem	BOX	antibiotics	TRUE	
+v162d_Ertapenem_Ongoing	Ertapenem Ongoing	BOX	antibiotics	TRUE	
+v163a_Flucloxacillin	Flucloxacillin	BOX	antibiotics	TRUE	
+v163d_Flucloxacillin_Ongoing	Flucloxacillin Ongoing	BOX	antibiotics	TRUE	
+v164a_Fosfomycin	Fosfomycin	BOX	antibiotics	TRUE	
+v164d_Fosfomycin_Ongoing	Fosfomycin Ongoing	BOX	antibiotics	TRUE	
+v165a_Gentamycin	Gentamycin	BOX	antibiotics	TRUE	
+v165d_Gentamycin_Ongoing	Gentamycin Ongoing	BOX	antibiotics	TRUE	
+v166a_Impinem	Impinem	BOX	antibiotics	TRUE	
+v166d_Impinem_Ongoing	Impinem Ongoing	BOX	antibiotics	TRUE	
+v167a_Linezolid	Linezolid	BOX	antibiotics	TRUE	
+v167d_Linezolid_Ongoing	Linezolid Ongoing	BOX	antibiotics	TRUE	
+v168a_Meropenem	Meropenem	BOX	antibiotics	TRUE	
+v168d_Meropenem_Ongoing	Meropenem Ongoing	BOX	antibiotics	TRUE	
+v169a_Metronidazol	Metronidazol	BOX	antibiotics	TRUE	
+v169d_Metronidazol_Ongoing	Metronidazol Ongoing	BOX	antibiotics	TRUE	
+v170a_Moxifloxacin	Moxifloxacin	BOX	antibiotics	TRUE	
+v170d_Moxifloxacin_Ongoing	Moxifloxacin Ongoing	BOX	antibiotics	TRUE	
+v171a_Penicillin	Penicillin	BOX	antibiotics	TRUE	
+v171d_Penicillin_Ongoing	Penicillin Ongoing	BOX	antibiotics	TRUE	
+v172a_Piperacillin_Tazobactam	Piperacillin_Tazobactam	BOX	antibiotics	TRUE	
+v172d_Piperacillin_Tazobactam_Ongoing	Piperacillin_Tazobactam Ongoing	BOX	antibiotics	TRUE	
+v173a_Rifampicin	Rifampicin	BOX	antibiotics	TRUE	
+v173d_Rifampicin_Ongoing	Rifampicin Ongoing	BOX	antibiotics	TRUE	
+v174a_Teicoplanin	Teicoplanin	BOX	antibiotics	TRUE	
+v174d_Teicoplanin_Ongoing	Teicoplanin Ongoing	BOX	antibiotics	TRUE	
+v175a_Tigecyclin	Tigecyclin	BOX	antibiotics	TRUE	
+v175d_Tigecyclin_Ongoing	Tigecyclin Ongoing	BOX	antibiotics	TRUE	
+v176a_Trimetoprim	Trimetoprim	BOX	antibiotics	TRUE	
+v176d_Trimetoprim_Ongoing	Trimetoprim Ongoing	BOX	antibiotics	TRUE	
+v177a_Vancomycin	Vancomycin	BOX	antibiotics	TRUE	
+v177d_Vancomycin_Ongoing	Vancomycin Ongoing	BOX	antibiotics	TRUE	
+v178c_Other_Antibiotic_Stop	Other Antibiotic Stop	BOX	antibiotics	TRUE	
+v178d_Other_Antibiotic_Ongoing	Other Antibiotic Ongoing	BOX	antibiotics	TRUE	
+v180a_Aciclovir	Aciclovir	BOX	antivirals	TRUE	
+v180d_Aciclovir_ongoing	Aciclovir ongoing	BOX	antivirals	TRUE	
+v181a_Foscarnet	Foscarnet	BOX	antivirals	TRUE	
+v181d_Foscarnet_ongoing	Foscarnet ongoing	BOX	antivirals	TRUE	
+v182a_Ganciclovir	Ganciclovir	BOX	antivirals	TRUE	
+v182d_Ganciclovir_ongoing	Ganciclovir ongoing	BOX	antivirals	TRUE	
+v183a_Valganciclovir	Valganciclovir	BOX	antivirals	TRUE	
+v183d_Valganciclovir_ongoing	Valganciclovir ongoing	BOX	antivirals	TRUE	
+v184c_other_Antivirals_stop	Other Antivirals stop	BOX	antivirals	TRUE	
+v184d_other_Antivirals_ongoing	Other Antivirals ongoing	BOX	antivirals	TRUE	
+v185a_Amphotericin_B	Amphotericin B	BOX	antifungal	TRUE	
+v185c_Amphotericin_B_ongoing	Amphotericin B ongoing	BOX	antifungal	TRUE	
+v186a_Caspofungin	Caspofungin	BOX	antifungal	TRUE	
+v186c_Caspofungin_ongoing	Caspofungin ongoing	BOX	antifungal	TRUE	
+v187a_Fluconazol	Fluconazol	BOX	antifungal	TRUE	
+v187c_Fluconazol_ongoing	Fluconazol ongoing	BOX	antifungal	TRUE	
+v188a_Nystatin	Nystatin	BOX	antifungal	TRUE	
+v188c_Nystatin_ongoing	Nystatin ongoing	BOX	antifungal	TRUE	
+v189a_Voriconazol	Voriconazol	BOX	antifungal	TRUE	
+v189c_Voriconazol_ongoing	Voriconazol ongoing	BOX	antifungal	TRUE	
+v190c_other_antimycotics_ongoing	Other Antimycotics ongoing	BOX	antifungal	TRUE	
+v200a_Acetyl_salycic_acid	Acetyl salycic acid	BOX	comedication	TRUE	
+v200d_Acetylsalycicacid_Ongoing	Acetyl salycic acid Ongoing	BOX	comedication	TRUE	
+v201a_Amlodipin	Amlodipin	BOX	comedication	TRUE	
+v201d_Amlodipin_Ongoing	Amlodipin Ongoing	BOX	comedication	TRUE	
+v202a_Atenolol	Atenolol	BOX	comedication	TRUE	
+v202d_Atenolol_Ongoing	Atenolol Ongoing	BOX	comedication	TRUE	
+v203a_Atorvastatin	Atorvastatin	BOX	comedication	TRUE	
+v203d_Atorvastatin_Ongoing	Atorvastatin Ongoing	BOX	comedication	TRUE	
+v204a_Bisoprolol	Bisoprolol	BOX	comedication	TRUE	
+v204d_Bisoprolol_Ongoing	Bisoprolol Ongoing	BOX	comedication	TRUE	
+v205a_Candesartan	Candesartan	BOX	comedication	TRUE	
+v205d_Candesartan_Ongoing	Candesartan Ongoing	BOX	comedication	TRUE	
+v206a_Cinacalcet	Cinacalcet	BOX	comedication	TRUE	
+v206d_Cinacalcet_Ongoing	Cinacalcet Ongoing	BOX	comedication	TRUE	
+v207a_Colecalciferol	Colecalciferol	BOX	comedication	TRUE	
+v207d_Colecalciferol_Ongoing	Colecalciferol Ongoing	BOX	comedication	TRUE	
+v208a_Diltiazem	Diltiazem	BOX	comedication	TRUE	
+v208d_Diltiazem_Ongoing	Diltiazem Ongoing	BOX	comedication	TRUE	
+v209a_Enalapril	Enalapril	BOX	comedication	TRUE	
+v209d_Enalapril_Ongoing	Enalapril Ongoing	BOX	comedication	TRUE	
+v210a_Furosemid	Furosemid	BOX	comedication	TRUE	
+v210d_Furosemid_Ongoing	Furosemid Ongoing	BOX	comedication	TRUE	
+v211a_Hydrochlorothiazid	Hydrochlorothiazid	BOX	comedication	TRUE	
+v211d_Hydrochlorothiazid_Ongoing	Hydrochlorothiazid Ongoing	BOX	comedication	TRUE	
+v212a_Ibuprofen	Ibuprofen	BOX	comedication	TRUE	
+v212d_Ibuprofen_Ongoing	Ibuprofen Ongoing	BOX	comedication	TRUE	
+v213a_Lisinopril	Lisinopril	BOX	comedication	TRUE	
+v213d_Lisinopril_Ongoing	Lisinopril Ongoing	BOX	comedication	TRUE	
+v214a_Metformin	Metformin	BOX	comedication	TRUE	
+v214d_Metformin_Ongoing	Metformin Ongoing	BOX	comedication	TRUE	
+v215a_Methotrexat	Methotrexat	BOX	comedication	TRUE	
+v215d_Methotrexat_Ongoing	Methotrexat Ongoing	BOX	comedication	TRUE	
+v216a_Metoprolol	Metoprolol	BOX	comedication	TRUE	
+v216d_Metoprolol_Ongoing	Metoprolol Ongoing	BOX	comedication	TRUE	
+v217a_Nifedipin	Nifedipin	BOX	comedication	TRUE	
+v217d_Nifedipin_Ongoing	Nifedipin Ongoing	BOX	comedication	TRUE	
+v218a_Omeprazol	Omeprazol	BOX	comedication	TRUE	
+v218d_Omeprazol_Ongoing	Omeprazol Ongoing	BOX	comedication	TRUE	
+v219a_Pantoprazol	Pantoprazol	BOX	comedication	TRUE	
+v219d_Pantoprazol_Ongoing	Pantoprazol Ongoing	BOX	comedication	TRUE	
+v220a_Phenprocoumon	Phenprocoumon	BOX	comedication	TRUE	
+v220d_Phenprocoumon_Ongoing	Phenprocoumon Ongoing	BOX	comedication	TRUE	
+v221a_Ramipril	Ramipril	BOX	comedication	TRUE	
+v221d_Ramipril_Ongoing	Ramipril Ongoing	BOX	comedication	TRUE	
+v222a_Ranitidine	Ranitidine	BOX	comedication	TRUE	
+v222d_Ranitidine_Ongoing	Ranitidine Ongoing	BOX	comedication	TRUE	
+v223a_Simvastatin	Simvastatin	BOX	comedication	TRUE	
+v223d_Simvastatin_Ongoing	Simvastatin Ongoing	BOX	comedication	TRUE	
+v224a_Torasemid	Torasemid	BOX	comedication	TRUE	
+v224d_Torasemid_Ongoing	Torasemid Ongoing	BOX	comedication	TRUE	
+v225a_Lercanidipin	Lercanidipin	BOX	comedication	TRUE	
+v225d_Lercanidipin_Ongoing	Lercanidipin Ongoing	BOX	comedication	TRUE	
+v226a_Pravastatin	Pravastatin	BOX	comedication	TRUE	
+v226d_Pravastatin_Ongoing	Pravastatin Ongoing	BOX	comedication	TRUE	
+v227a_Fluvastatin	Fluvastatin	BOX	comedication	TRUE	
+v227d_Fluvastatin_Ongoing	Fluvastatin Ongoing	BOX	comedication	TRUE	
+v228a_Valsartan	Valsartan	BOX	comedication	TRUE	
+v228d_Valsartan_Ongoing	Valsartan Ongoing	BOX	comedication	TRUE	
+v229a_Other_Concomitant	Other Concomitant	BOX	comedication	TRUE	
+v229d_Other_Concomitant_Ongoing	Other Concomitant Ongoing	BOX	comedication	TRUE	
+v313_treat_Immunadsorption_pphe	Immunadsorption/Plasmapherese	Box	outcome_info	TRUE	
+v403_infect_other	Other Infection	Box	outcome_info	TRUE	
+v403_infect_other_2	Other Infection	Box	outcome_info	TRUE	
+v403_infect_other_3	Other Infection	Box	outcome_info	TRUE	
+v403_infect_other_4	Other Infection	Box	outcome_info	TRUE	
+v404a_Tacrolimus_Modigraf	Tacrolimus - Modigraf	Box	immunosuppression_info	TRUE	
+v405a_Tacrolimus_Modigraf_introduced	Tacrolimus - Modigraf	Box	outcome_info	TRUE	
+v406a_Tacrolimus_Modigraf_discontinued	Tacrolimus - Modigraf	Box	outcome_info	TRUE	
+v407a_prednisone	Prednisone	Box	immunosuppression_info	TRUE	
+v408a_prednisone_introduced	Prednisone	Box	immunosuppression_info	TRUE	
+v409a_prednisone_discontinued	Prednisone	Box	immunosuppression_info	TRUE	
+v410a_prednisolone	Prednisolone	Box	immunosuppression_info	TRUE	
+v411a_prednisolone_discontinued	Prednisolone	Box	immunosuppression_info	TRUE	
+v411a_prednisolone_introduced	Prednisolone	Box	immunosuppression_info	TRUE	
+v502_cakut_dis	CAKUT	BOX	baseline_info	TRUE	
+v503_Plasmapheresis	Plasmapheresis	BOX	baseline_info	TRUE	
+v504_immunoadsorption	Immunoadsorption	BOX	baseline_info	TRUE	
+v505_intravenous_immunoglobulins	Intravenous immunoglobulins	BOX	baseline_info	TRUE	
+v506_rituximab	Rituximab	BOX	baseline_info	TRUE	
+v69_Vasculitis_dis	Vasculitis	Box	baseline_info	TRUE	
+v70_Diabetic_Nephropathy_dis	Diabetic Nephropathy 	Box	baseline_info	TRUE	
+v71_Glomerulonephritides_dis	Glomerulonephritides	Box	baseline_info	TRUE	
+v72_Hypertensive_Nephropathy_dis	Hypertensive Nephropathy	Box	baseline_info	TRUE	
+v73_Nephrolithiasis_dis	Nephrolithiasis	Box	baseline_info	TRUE	
+v74_Polycystic_Kidney__dis	Polycystic Kidney Diseases	Box	baseline_info	TRUE	
+v75_Coronary_artery_comor	Coronary artery disease	Box	baseline_info	TRUE	
+v76_Vesicoureteral_Reflux_dis	Vesicoureteral Reflux	Box	baseline_info	TRUE	
+v77_Other_disease	Other (free text)	Box	baseline_info	TRUE	
+v78_Diabetes_comor	Diabetes 	Box	baseline_info	TRUE	
+v79_Epilepsy_comor	Epilepsy	Box	baseline_info	TRUE	
+v80_Hypertension_comor	Hypertension	Box	baseline_info	TRUE	
+v81_Inflammatory_bowel_comor	Inflammatory bowel disease	Box	baseline_info	TRUE	
+v82_Irritable_bowel_comor	Irritable bowel syndrome	Box	baseline_info	TRUE	
+v83_Parkinson_Disease_comor	Parkinson's Disease	Box	baseline_info	TRUE	
+v84_Psoriasis_comor	Psoriasis	Box	baseline_info	TRUE	
+v85_Rheumatoid_Arthritis_comor	Rheumatoid Arthritis 	Box	baseline_info	TRUE	
+v86_Other_comorbidity	Other (Free text)	Box	baseline_info	TRUE	
+v94_infect_uro	Urogenital infection	Box	outcome_info	TRUE	
+v94_infect_uro_2	Urogenital infection	Box	outcome_info	TRUE	
+v94_infect_uro_3	Urogenital infection	Box	outcome_info	TRUE	
+v94_infect_uro_4	Urogenital infection	Box	outcome_info	TRUE	
+v95_infect_gast	Gastrointestinal Infection	Box	outcome_info	TRUE	
+v95_infect_gast_2	Gastrointestinal Infection	Box	outcome_info	TRUE	
+v95_infect_gast_3	Gastrointestinal Infection	Box	outcome_info	TRUE	
+v95_infect_gast_4	Gastrointestinal Infection	Box	outcome_info	TRUE	
+v96_infect_airw	Airway infection	Box	outcome_info	TRUE	
+v96_infect_airw_2	Airway infection	Box	outcome_info	TRUE	
+v96_infect_airw_3	Airway infection	Box	outcome_info	TRUE	
+v96_infect_airw_4	Airway infection	Box	outcome_info	TRUE	
+v99_treat_Glucocorticoid	Glucocorticoid pulse 	Box	outcome_info	TRUE	
+v116b_Azathioprin_introduced_date	Azathioprin Date	Date	outcome_info	TRUE	
+v117b_Cyclosporine_introduced_date	Cyclosporine Date	Date	outcome_info	TRUE	
+v118b_Everolimus_introduced_date	Everolimus Date	Date	outcome_info	TRUE	
+v119b_Glucocorticoid_introduced_date	Glucocorticoid Date	Date	outcome_info	TRUE	
+v120b_Mycophenolate_Mofetil_introduced_date	Mycophenolate Mofetil Date	Date	outcome_info	TRUE	
+v121b_Mycophenolate_Sodium_introduced_date	Mycophenolate Sodium Date	Date	outcome_info	TRUE	
+v122b_Sirolimus_introduced_date	Sirolimus Date	Date	outcome_info	TRUE	
+v123b_Tacrolimus_Prograf_introduced_date	Tacrolimus - Prograf Date	Date	outcome_info	TRUE	
+v124b_Tacrolimus_Envarsus_introduced_date	Tacrolimus - Envarsus Date	Date	outcome_info	TRUE	
+v125b_Tacrolimus_Advagraf_introduced_date	Tacrolimus - Advagraf Date	Date	outcome_info	TRUE	
+v126b_Azathioprin_discontinued_date	Azathioprin Date	Date	outcome_info	TRUE	
+v127b_Cyclosporine_discontinued_date	Cyclosporine Date	Date	outcome_info	TRUE	
+v128b_Everolimus_discontinued_date	Everolimus Date	Date	outcome_info	TRUE	
+v129b_Glucocorticoid_discontinued_date	Glucocorticoid Date	Date	outcome_info	TRUE	
+v130b_Mycophenolate_Mofetil_discontinued_date	Mycophenolate Mofetil Date	Date	outcome_info	TRUE	
+v131b_Mycophenolate_Sodium_discontinued_date	Mycophenolate Sodium Date	Date	outcome_info	TRUE	
+v132b_Sirolimus_discontinued_date	Sirolimus Date	Date	outcome_info	TRUE	
+v133b_Tacrolimus_Prograf_discontinued_date	Tacrolimus - Prograf Date	Date	outcome_info	TRUE	
+v134b_Tacrolimus_Envarsus_discontinued_date	Tacrolimus - Envarsus Date	Date	outcome_info	TRUE	
+v135b_Tacrolimus_Advagraf_discontinued_date	Tacrolimus - Advagraf Date	Date	outcome_info	TRUE	
+v136c_Other_discontinued_date	Other Discontinued Date	Date	outcome_info	FALSE	
+v137c_Other_introduced_date	Other Introduced Date	Date	outcome_info	FALSE	
+v150b_Ampicilin_Start	Ampicilin Start	DATE	antibiotics	TRUE	
+v150c_Ampicilin_Stop	Ampicilin Stop	DATE	antibiotics	TRUE	
+v151b_Ampicillin_Sulbactam_Start	Ampicillin_Sulbactam Start	DATE	antibiotics	TRUE	
+v151c_Ampicillin_Sulbactam_Stop	Ampicillin_Sulbactam Stop	DATE	antibiotics	TRUE	
+v152b_Azitromycin_Start	Azitromycin Start	DATE	antibiotics	TRUE	
+v152c_Azitromycin_Stop	Azitromycin Stop	DATE	antibiotics	TRUE	
+v153b_Cefepim_Start	Cefepim Start	DATE	antibiotics	TRUE	
+v153c_Cefepim_Stop	Cefepim Stop	DATE	antibiotics	TRUE	
+v154b_Ceftazidim_Start	Ceftazidim Start	DATE	antibiotics	TRUE	
+v154c_Ceftazidim_Stop	Ceftazidim Stop	DATE	antibiotics	TRUE	
+v155b_Ceftriaxon_Start	Ceftriaxon Start	DATE	antibiotics	TRUE	
+v155c_Ceftriaxon_Stop	Ceftriaxon Stop	DATE	antibiotics	TRUE	
+v156b_Cefuroxim_Start	Cefuroxim Start	DATE	antibiotics	TRUE	
+v156c_Cefuroxim_Stop	Cefuroxim Stop	DATE	antibiotics	TRUE	
+v157b_Ciprofloxacin_Start	Ciprofloxacin Start	DATE	antibiotics	TRUE	
+v157c_Ciprofloxacin_Stop	Ciprofloxacin Stop	DATE	antibiotics	TRUE	
+v158b_Clarithromycin_Start	Clarithromycin Start	DATE	antibiotics	TRUE	
+v158c_Clarithromycin_Stop	Clarithromycin Stop	DATE	antibiotics	TRUE	
+v159b_Clindamycin_Start	Clindamycin Start	DATE	antibiotics	TRUE	
+v159c_Clindamycin_Stop	Clindamycin Stop	DATE	antibiotics	TRUE	
+v160b_Cotrimoxazol_Start	Cotrimoxazol Start	DATE	antibiotics	TRUE	
+v160c_Cotrimoxazol_Stop	Cotrimoxazol Stop	DATE	antibiotics	TRUE	
+v161b_Doxycyclin_Start	Doxycyclin Start	DATE	antibiotics	TRUE	
+v161c_Doxycyclin_Stop	Doxycyclin Stop	DATE	antibiotics	TRUE	
+v162b_Ertapenem_Start	Ertapenem Start	DATE	antibiotics	TRUE	
+v162c_Ertapenem_Stop	Ertapenem Stop	DATE	antibiotics	TRUE	
+v163b_Flucloxacillin_Start	Flucloxacillin Start	DATE	antibiotics	TRUE	
+v163c_Flucloxacillin_Stop	Flucloxacillin Stop	DATE	antibiotics	TRUE	
+v164b_Fosfomycin_Start	Fosfomycin Start	DATE	antibiotics	TRUE	
+v164c_Fosfomycin_Stop	Fosfomycin Stop	DATE	antibiotics	TRUE	
+v165b_Gentamycin_Start	Gentamycin Start	DATE	antibiotics	TRUE	
+v165c_Gentamycin_Stop	Gentamycin Stop	DATE	antibiotics	TRUE	
+v166b_Impinem_Start	Impinem Start	DATE	antibiotics	TRUE	
+v166c_Impinem_Stop	Impinem Stop	DATE	antibiotics	TRUE	
+v167b_Linezolid_Start	Linezolid Start	DATE	antibiotics	TRUE	
+v167c_Linezolid_Stop	Linezolid Stop	DATE	antibiotics	TRUE	
+v168b_Meropenem_Start	Meropenem Start	DATE	antibiotics	TRUE	
+v168c_Meropenem_Stop	Meropenem Stop	DATE	antibiotics	TRUE	
+v169b_Metronidazol_Start	Metronidazol Start	DATE	antibiotics	TRUE	
+v169c_Metronidazol_Stop	Metronidazol Stop	DATE	antibiotics	TRUE	
+v170b_Moxifloxacin_Start	Moxifloxacin Start	DATE	antibiotics	TRUE	
+v170c_Moxifloxacin_Stop	Moxifloxacin Stop	DATE	antibiotics	TRUE	
+v171b_Penicillin_Start	Penicillin Start	DATE	antibiotics	TRUE	
+v171c_Penicillin_Stop	Penicillin Stop	DATE	antibiotics	TRUE	
+v172b_Piperacillin_Tazobactam_Start	Piperacillin_Tazobactam Start	DATE	antibiotics	TRUE	
+v172c_Piperacillin_Tazobactam_Stop	Piperacillin_Tazobactam Stop	DATE	antibiotics	TRUE	
+v173b_Rifampicin_Start	Rifampicin Start	DATE	antibiotics	TRUE	
+v173c_Rifampicin_Stop	Rifampicin Stop	DATE	antibiotics	TRUE	
+v174b_Teicoplanin_Start	Teicoplanin Start	DATE	antibiotics	TRUE	
+v174c_Teicoplanin_Stop	Teicoplanin Stop	DATE	antibiotics	TRUE	
+v175b_Tigecyclin_Start	Tigecyclin Start	DATE	antibiotics	TRUE	
+v175c_Tigecyclin_Stop	Tigecyclin Stop	DATE	antibiotics	TRUE	
+v176b_Trimetoprim_Start	Trimetoprim Start	DATE	antibiotics	TRUE	
+v176c_Trimetoprim_Stop	Trimetoprim Stop	DATE	antibiotics	TRUE	
+v177b_Vancomycin_Start	Vancomycin Start	DATE	antibiotics	TRUE	
+v177c_Vancomycin_Stop	Vancomycin Stop	DATE	antibiotics	TRUE	
+v178b_Other_Antibiotic_Start	Other Antibiotic Start	DATE	antibiotics	TRUE	
+v178e_Other_Antibiotic_Details	Other Antibiotic Details	DATE	antibiotics	TRUE	
+v180b_Aciclovir_start	Aciclovir Start	DATE	antivirals	TRUE	
+v180c_Aciclovir_stop	Aciclovir stop	DATE	antivirals	TRUE	
+v181b_Foscarnet_start	Foscarnet Start	DATE	antivirals	TRUE	
+v181c_Foscarnet_stop	Foscarnet stop	DATE	antivirals	TRUE	
+v182b_Ganciclovir_start	Ganciclovir Start	DATE	antivirals	TRUE	
+v182c_Ganciclovir_stop	Ganciclovir stop	DATE	antivirals	TRUE	
+v183b_Valganciclovir_start	Valganciclovir Start	DATE	antivirals	TRUE	
+v183c_Valganciclovir_stop	Valganciclovir stop	DATE	antivirals	TRUE	
+v184b_other_Antivirals_start	Other Antivirals Start	DATE	antivirals	TRUE	
+v184e_other_Antivirals_details	Other Antivirals Details	DATE	antivirals	TRUE	
+v185b_Amphotericin_B_start	Amphotericin B Start	DATE	antifungal	TRUE	
+v185c_Amphotericin_B_stop	Amphotericin B stop	DATE	antifungal	TRUE	
+v186b_Caspofungin_start	Caspofungin Start	DATE	antifungal	TRUE	
+v186c_Caspofungin_stop	Caspofungin stop	DATE	antifungal	TRUE	
+v187b_Fluconazol_start	Fluconazol Start	DATE	antifungal	TRUE	
+v187c_Fluconazol_stop	Fluconazol stop	DATE	antifungal	TRUE	
+v188b_Nystatin_start	Nystatin Start	DATE	antifungal	TRUE	
+v188c_Nystatin_stop	Nystatin stop	DATE	antifungal	TRUE	
+v189b_Voriconazol_start	Voriconazol Start	DATE	antifungal	TRUE	
+v189c_Voriconazol_stop	Voriconazol stop	DATE	antifungal	TRUE	
+v190b_other_antimycotics_start	Other Antimycotics Start	DATE	antifungal	TRUE	
+v190c_other_antimycotics_stop	Other Antimycotics stop	DATE	antifungal	TRUE	
+v190e_other_antimycotics_details	Other Antimycotics Details	DATE	antifungal	TRUE	
+v200b_Acetyl_salycic_acid_Start	Acetyl salycic acid Start	DATE	comedication	TRUE	
+v200c_Acetyl_salycic_acid_Stop	Acetyl salycic acid Stop	DATE	comedication	TRUE	
+v201b_Amlodipin_Start	Amlodipin Start	DATE	comedication	TRUE	
+v201c_Amlodipin_Stop	Amlodipin Stop	DATE	comedication	TRUE	
+v202b_Atenolol_Start	Atenolol Start	DATE	comedication	TRUE	
+v202c_Atenolol_Stop	Atenolol Stop	DATE	comedication	TRUE	
+v203b_Atorvastatin_Start	Atorvastatin Start	DATE	comedication	TRUE	
+v203c_Atorvastatin_Stop	Atorvastatin Stop	DATE	comedication	TRUE	
+v204b_Bisoprolol_Start	Bisoprolol Start	DATE	comedication	TRUE	
+v204c_Bisoprolol_Stop	Bisoprolol Stop	DATE	comedication	TRUE	
+v205b_Candesartan_Start	Candesartan Start	DATE	comedication	TRUE	
+v205c_Candesartan_Stop	Candesartan Stop	DATE	comedication	TRUE	
+v206b_Cinacalcet_Start	Cinacalcet Start	DATE	comedication	TRUE	
+v206c_Cinacalcet_Stop	Cinacalcet Stop	DATE	comedication	TRUE	
+v207b_Colecalciferol_Start	Colecalciferol Start	DATE	comedication	TRUE	
+v207c_Colecalciferol_Stop	Colecalciferol Stop	DATE	comedication	TRUE	
+v208b_Diltiazem_Start	Diltiazem Start	DATE	comedication	TRUE	
+v208c_Diltiazem_Stop	Diltiazem Stop	DATE	comedication	TRUE	
+v209b_Enalapril_Start	Enalapril Start	DATE	comedication	TRUE	
+v209c_Enalapril_Stop	Enalapril Stop	DATE	comedication	TRUE	
+v210b_Furosemid_Start	Furosemid Start	DATE	comedication	TRUE	
+v210c_Furosemid_Stop	Furosemid Stop	DATE	comedication	TRUE	
+v211b_Hydrochlorothiazid_Start	Hydrochlorothiazid Start	DATE	comedication	TRUE	
+v211c_Hydrochlorothiazid_Stop	Hydrochlorothiazid Stop	DATE	comedication	TRUE	
+v212b_Ibuprofen_Start	Ibuprofen Start	DATE	comedication	TRUE	
+v212c_Ibuprofen_Stop	Ibuprofen Stop	DATE	comedication	TRUE	
+v213b_Lisinopril_Start	Lisinopril Start	DATE	comedication	TRUE	
+v213c_Lisinopril_Stop	Lisinopril Stop	DATE	comedication	TRUE	
+v214b_Metformin_Start	Metformin Start	DATE	comedication	TRUE	
+v214c_Metformin_Stop	Metformin Stop	DATE	comedication	TRUE	
+v215b_Methotrexat_Start	Methotrexat Start	DATE	comedication	TRUE	
+v215c_Methotrexat_Stop	Methotrexat Stop	DATE	comedication	TRUE	
+v216b_Metoprolol_Start	Metoprolol Start	DATE	comedication	TRUE	
+v216c_Metoprolol_Stop	Metoprolol Stop	DATE	comedication	TRUE	
+v217b_Nifedipin_Start	Nifedipin Start	DATE	comedication	TRUE	
+v217c_Nifedipin_Stop	Nifedipin Stop	DATE	comedication	TRUE	
+v218b_Omeprazol_Start	Omeprazol Start	DATE	comedication	TRUE	
+v218c_Omeprazol_Stop	Omeprazol Stop	DATE	comedication	TRUE	
+v219b_Pantoprazol_Start	Pantoprazol Start	DATE	comedication	TRUE	
+v219c_Pantoprazol_Stop	Pantoprazol Stop	DATE	comedication	TRUE	
+v220b_Phenprocoumon_Start	Phenprocoumon Start	DATE	comedication	TRUE	
+v220c_Phenprocoumon_Stop	Phenprocoumon Stop	DATE	comedication	TRUE	
+v221b_Ramipril_Start	Ramipril Start	DATE	comedication	TRUE	
+v221c_Ramipril_Stop	Ramipril Stop	DATE	comedication	TRUE	
+v222b_Ranitidine_Start	Ranitidine Start	DATE	comedication	TRUE	
+v222c_Ranitidine_Stop	Ranitidine Stop	DATE	comedication	TRUE	
+v223b_Simvastatin_Start	Simvastatin Start	DATE	comedication	TRUE	
+v223c_Simvastatin_Stop	Simvastatin Stop	DATE	comedication	TRUE	
+v224b_Torasemid_Start	Torasemid Start	DATE	comedication	TRUE	
+v224c_Torasemid_Stop	Torasemid Stop	DATE	comedication	TRUE	
+v225b_Lercanidipin_Start	Lercanidipin Start	DATE	comedication	TRUE	
+v225c_Lercanidipin_Stop	Lercanidipin Stop	DATE	comedication	TRUE	
+v226b_Pravastatin_Start	Pravastatin Start	DATE	comedication	TRUE	
+v226c_Pravastatin_Stop	Pravastatin Stop	DATE	comedication	TRUE	
+v227b_Fluvastatin_Start	Fluvastatin Start	DATE	comedication	TRUE	
+v227c_Fluvastatin_Stop	Fluvastatin Stop	DATE	comedication	TRUE	
+v228b_Valsartan_Start	Valsartan Start	DATE	comedication	TRUE	
+v228c_Valsartan_Stop	Valsartan Stop	DATE	comedication	TRUE	
+v229b_Other_Concomitant_Start	Other Concomitant Start	DATE	comedication	TRUE	
+v229c_Other_Concomitant_Stop	Other Concomitant Stop	DATE	comedication	TRUE	
+v405b_Tacrolimus_Modigraf_introduced_date	Tacrolimus - Modigraf Date	Date	outcome_info	TRUE	
+v406b_Tacrolimus_Modigraf_discontinued_date	Tacrolimus - Modigraf Date	Date	outcome_info	TRUE	
+v408b_prednisone_introduced_date	Prednisone Date	Date	immunosuppression_info	TRUE	
+v409b_prednisone_discontinued_date	Prednisone Date	Date	immunosuppression_info	TRUE	
+v411b_prednisolone_discontinued_date	Prednisolone Date	Date	immunosuppression_info	TRUE	
+v411b_prednisolone_introduced_date	Prednisolone Date	Date	immunosuppression_info	TRUE	
+v12b_smoking_until_date	Smoking until 	EDATE	baseline_info	TRUE	
+v13_dob	Date of birth	EDATE	baseline_info	TRUE	
+v22b_graft_loss_date	Graft loss date	EDATE	outcome_info	TRUE	
+v23b_death_date	Death date	EDATE	outcome_info	TRUE	
+v24b_beginn_rrt_date	Beginning of RRT date	EDATE	outcome_info	TRUE	
+v25b_retx_date	Re-Tx date	EDATE	outcome_info	TRUE	
+v30b_hosp_start_date	Hospitalization start date	EDATE	outcome_info	TRUE	
+v30b_hosp_start_date_2	Hospitalization start date	EDATE	outcome_info	TRUE	
+v30b_hosp_start_date_3	Hospitalization start date	EDATE	outcome_info	TRUE	
+v30b_hosp_start_date_4	Hospitalization start date	EDATE	outcome_info	TRUE	
+v30c_hosp_stop_date	Hospitalization stopp date	EDATE	outcome_info	TRUE	
+v30c_hosp_stop_date_2	Hospitalization stopp date	EDATE	outcome_info	TRUE	
+v30c_hosp_stop_date_3	Hospitalization stopp date	EDATE	outcome_info	TRUE	
+v30c_hosp_stop_date_4	Hospitalization stopp date	EDATE	outcome_info	TRUE	
+v401_previous_tx_date	Previous Transplantation Date	EDATE	baseline_info	TRUE	
+v61_visit_date	Date of visit	EDATE	visit_info	TRUE	
+v66b_renal_prior_date	Prior RRT start date	EDATE	baseline_info	TRUE	
+v89_renal_tx_date	Date of Transplantation	EDATE	baseline_info	TRUE	
+v12a_smoking_string	Smoking string	Factor	outcome_info	TRUE	
+v14_alcohol_string	Alcohol consumption string	Factor	outcome_info	TRUE	
+v15_diet_string	Diet string	Factor	outcome_info	TRUE	
+v3_sex_string	Sex string	Factor	outcome_info	TRUE	
+v306_transplantation_program_string	Transplant program string	Factor	outcome_info	FALSE	
+v30d_hosp_cause_1_string	Hospitalisation Cause 1 string	Factor	outcome_info	TRUE	
+v30d_hosp_cause_2_string	Hospitalisation Cause 2 string	Factor	outcome_info	TRUE	
+v30d_hosp_cause_3_string	Hospitalisation Cause 3 string	Factor	outcome_info	TRUE	
+v66c_renal_prior_type_string	Type of RRT prior to transplant string	Factor	outcome_info	TRUE	
+v90_tx_type_string	Transplant type string	Factor	outcome_info	TRUE	
+v98_rejection_type_string	Rejetion type string	Factor	outcome_info	TRUE	
+v1_study_cohort	Study Cohort	Numeric	baseline_info	TRUE	;"";1;"Cohort 1";2;"Cohort 2"
+v105b_Azathioprin_dose	Azathioprin dose [mg/d]	Numeric	immunosuppression_info	TRUE	
+v105c_Azathioprin_btl	Azathioprin BTL	Numeric	immunosuppression_info	FALSE	
+v106b_Cyclosporine_dose	Cyclosporine dose [mg/d]	Numeric	immunosuppression_info	TRUE	
+v106c_Cyclosporine_btl	Cyclosporine dose BTL [µg/l]	Numeric	immunosuppression_info	FALSE	
+v107b_Everolimus_dose	Everolimus dose [mg/d]	Numeric	immunosuppression_info	TRUE	
+v107c_Everolimus_btl	Everolimus BTL [µg/l]	Numeric	immunosuppression_info	FALSE	
+v108b_Glucocorticoid_dose	Glucocorticoid dose [mg/d]	Numeric	immunosuppression_info	TRUE	
+v108c_Glucocorticoid_btl	Glucocorticoid BTL 	Numeric	immunosuppression_info	FALSE	
+v109b_Mycophenolate_Mofetil_dose	Mycophenolate Mofetil dose [mg/d]	Numeric	immunosuppression_info	TRUE	
+v109c_Mycophenolate_Mofetil_btl	Mycophenolate Mofetil BTL [mg/l]	Numeric	immunosuppression_info	FALSE	
+v110b_Mycophenolate_Sodium_dose	Mycophenolate Sodium dose [mg/d]	Numeric	immunosuppression_info	TRUE	
+v110c_Mycophenolate_Sodium_btl	Mycophenolate Sodium BTL [mg/l]	Numeric	immunosuppression_info	FALSE	
+v111b_Sirolimus_dose	Sirolimus dose [mg/d]	Numeric	immunosuppression_info	TRUE	
+v111c_Sirolimus_btl	Sirolimus BTL [ng/ml]	Numeric	immunosuppression_info	FALSE	
+v112b_Tacrolimus_Prograf_dose	Tacrolimus - Prograf dose [mg/d]	Numeric	immunosuppression_info	TRUE	
+v112c_Tacrolimus_Prograf_btl	Tacrolimus - Prograf BTL [µg/l]	Numeric	immunosuppression_info	FALSE	
+v113b_Tacrolimus_Envarsus_dose	Tacrolimus - Envarsus dose [mg/d]	Numeric	immunosuppression_info	TRUE	
+v113c_Tacrolimus_Envarsus_btl	Tacrolimus - Envarsus BTL [µg/l]	Numeric	immunosuppression_info	FALSE	
+v114b_Tacrolimus_Advagraf_dose	Tacrolimus - Advagraf dose [mg/d]	Numeric	immunosuppression_info	TRUE	
+v114c_Tacrolimus_Advagraf_btl	Tacrolimus - Advagraf BTL [µg/l]	Numeric	immunosuppression_info	FALSE	
+v12a_smoking	Smoking	Numeric	baseline_info	FALSE	;"";1;"Yes";0;"No";2;"Until"
+v14_alcohol	Alcohol	Numeric	baseline_info	FALSE	;"";1;"Never";2;"Occasionally";3;"Daily"
+v15_diet	Diet	Numeric	baseline_info	FALSE	;"";1;"Vegetarian";2;"Vegan";3;"Omnivore"
+v16_center	Study center	Numeric	baseline_info	FALSE	;"";1;"ZKJM Nierenzentrum";2;"External"
+v17a_faeces_ava	Faeces available	Numeric		FALSE	;"";1;"Yes";0;"No"
+v18a_urine_ava	Urine available	Numeric		FALSE	;"";1;"Yes";0;"No"
+V19a_blood_ava	Blood available	Numeric		FALSE	;"";1;"Yes";0;"No"
+v20_weight	Bodyweight [kg]	Numeric	visit_info	TRUE	
+v22a_graft_loss	Graft loss	Numeric	outcome_info	TRUE	;"";1;"Yes";0;"No"
+v23a_death	Patient death	Numeric	outcome_info	TRUE	;"";1;"Yes";0;"No"
+v24a_beginn_rrt	Beginning of RRT	Numeric	outcome_info	TRUE	;"";1;"Yes";0;"No"
+v250_Cyclosporine	Cyclosporine [µg/l]	NUMERIC	immunosuppression_info	TRUE	Cyclosporine (range: 50-350, unit: µg/l)
+v251_Everolimus	Everolimus [µg/l]	NUMERIC	immunosuppression_info	TRUE	Everolimus (range: 2-10, unit: µg/l)
+v252_Mycophenolic_acid	Mycophenolic acid [mg/l]	NUMERIC	immunosuppression_info	TRUE	Mycophenolic acid (range: 1-7, unit: mg/l)
+v253_Sirolimus	Sirolimus [ng/ml]	NUMERIC	immunosuppression_info	TRUE	Sirolimus (range: 2-15, unit: ng/ml)
+v254_Tacrolimus	Tacrolimus [µg/l]	NUMERIC	immunosuppression_info	TRUE	Tacrolimus (range: 3-17, unit: µg/l
+v255_AUC_MPA	AUC MPA [mg*h/l]	NUMERIC	immunosuppression_info	TRUE	AUC MPA (range: 10-200, unit: mg*h/l)
+v256_AUC_Tacrolimus	AUC Tacrolimus [µg*h/l]	NUMERIC	immunosuppression_info	TRUE	AUC Tacrolimus (range: 20-250, unit: µg*h/l)
+v257_Cystatine 	Cystatine C [mg/l]	NUMERIC	lab_values	TRUE	Cystatine C (range: 0.4- 1.5, unit: mg/l)
+v258_eGFR	eGFR [ml/min/qm]	NUMERIC	lab_values	TRUE	eGFR (range: 10-150 ml/min/qm)
+v259_Creatinine	Creatinine [mg/dl]	NUMERIC	lab_values	TRUE	Creatinine (range: 0.1-5, unit: mg/dl)
+v25a_retx	Re-TX	Numeric	outcome_info	TRUE	;"";1;"Yes";0;"No"
+v260_Leucocytes	Leucocytes [/nl]	NUMERIC	lab_values	TRUE	Leucocytes (Range: 3-16, unit: /nl)
+v261_Erythrocytes	Erythrocytes [/pl]	NUMERIC	lab_values	TRUE	Erythrocytes (Range: 3-7, unit: /pl)
+v262_Hemoglobin	Hemoglobin [/pl]	NUMERIC	lab_values	TRUE	Hemoglobin (Range: 8-17, unit: /pl)
+v263_Hematocrit	Hematocrit [l/l]	NUMERIC	lab_values	TRUE	Hematocrit (range: 0.2-0.6, unit: l/l)
+v264_Thrombocytes	Thrombocytes [/nl]	NUMERIC	lab_values	TRUE	Thrombocytes (range: 120-520, unit: /nl)
+v265_Albumin	Albumin [g/l]	NUMERIC	lab_values	TRUE	Albumin (range: 25-60, unit: g/l)
+v266_GOT	GOT [U/l]	NUMERIC	lab_values	TRUE	GOT (range: 5-60, unit: U/l)
+v267_GPT	GPT  [U/l]	NUMERIC	lab_values	TRUE	GPT  (range: 5-70, unit: U/l)
+v3_sex	Sex	Numeric	baseline_info	FALSE	;"";1;"Female";2;"Male"
+v300_hla_a	HLA-A	Numeric	baseline_info	TRUE	;"";0;"0";1;"1";2;"2"
+v301_hla_b	HLA-B	Numeric	baseline_info	TRUE	;"";0;"0";1;"1";2;"2"
+v302_hla_drb1	HLA-DRB1	Numeric	baseline_info	TRUE	;"";0;"0";1;"1";2;"2"
+v305_Cold_Ischemia_Time	Cold Ischemia Time	Numeric	baseline_info	TRUE	
+v306_Transplantation_Program	Transplantation Program	Numeric	baseline_info	FALSE	;"";1;"ETKAS (Standard)";2;"ESP (Senior)";3;"AM (Accepted Mismatch)";4;"Pediatric";5;"N/A"
+v307_hla_c	HLA-C	Numeric	baseline_info	TRUE	;"";0;"0";1;"1";2;"2"
+v308_hla_dqb1	HLA-DQB1	Numeric	baseline_info	TRUE	;"";0;"0";1;"1";2;"2"
+V30a_hospitalization	Hospitalization	Numeric	outcome_info	TRUE	;"";1;"Yes";0;"No"
+v30d_cause	Hospitalization cause	Numeric	outcome_info	FALSE	;"";1;"Infectious disease";2;"Non-infectious disease";3;"Undetermined"
+v30d_cause_2	Hospitalization cause	Numeric	outcome_info	FALSE	;"";1;"Infectious disease";2;"Non-infectious disease";3;"Undetermined"
+v30d_cause_3	Hospitalization cause	Numeric	outcome_info	FALSE	;"";1;"Infectious disease";2;"Non-infectious disease";3;"Undetermined"
+v30d_cause_4	Hospitalization cause	Numeric	outcome_info	FALSE	;"";1;"Infectious disease";2;"Non-infectious disease";3;"Undetermined"
+v30e_crp	CRP [mg/L, 0-350]	Numeric	outcome_info	TRUE	
+v30e_crp_2	CRP [mg/L, 0-350]	Numeric	outcome_info	TRUE	
+v30e_crp_3	CRP [mg/L, 0-350]	Numeric	outcome_info	TRUE	
+v30e_crp_4	CRP [mg/L, 0-350]	Numeric	outcome_info	TRUE	
+v30e_lymphocytes	Lymphocytes [/nL, 3-16]	Numeric	outcome_info	TRUE	
+v30e_lymphocytes_2	Lymphocytes [/nL, 3-16]	Numeric	outcome_info	TRUE	
+v30e_lymphocytes_3	Lymphocytes [/nL, 3-16]	Numeric	outcome_info	TRUE	
+v30e_lymphocytes_4	Lymphocytes [/nL, 3-16]	Numeric	outcome_info	TRUE	
+v4_cyp_genotype	CYP-Genotype 1	Numeric	baseline_info	TRUE	;"";1;"CYP3A5(*3) Positive";2;"CYP3A5(*3) Negative"
+v400_previous_tx	Previous Transplantation	Numeric	baseline_info	TRUE	;"";1;"Yes";0;"No"
+v404b_Tacrolimus_Modigraf_dose	Tacrolimus - Modigraf [mg/d]	Numeric	immunosuppression_info	TRUE	
+v404c_Tacrolimus_Modigraf_btl	Tacrolimus - Modigraf BTL [µg/l]	Numeric	immunosuppression_info	FALSE	
+v407b_prednisone_dose	Prednisone [mg/d]	Numeric	immunosuppression_info	TRUE	
+v407c_prednisone_btl	Prednisone BTL [µg/l]	Numeric	immunosuppression_info	FALSE	
+v410b_prednisolone_dose	Prednisolone [mg/d]	Numeric	immunosuppression_info	TRUE	
+v410c_prednisolone_btl	Prednisolone BTL [µg/l]	Numeric	immunosuppression_info	FALSE	
+v501_pretransplant	Pre-transplant Desenzitization	Numeric	baseline_info	TRUE	;"";1;"Yes";0;"No"
+v62_visit_number	Number of visit	Numeric	visit_info	TRUE	;"";1;"1";2;"2";3;"3";4;"4";5;"5";6;"6";7;"7";8;"8"
+v64_cyp_genotype_2	CYP-Genotype 2	Numeric	baseline_info	TRUE	;"";1;"CYP3A4(*22) Positive";2;"CYP3A4(*22) Negative"
+v66a_renal_prior	Renal replacement therapy (RRT) prior to transplantation	Numeric	baseline_info	TRUE	;"";1;"Yes";0;"No"
+v66c_renal_prior_type	Prior RRT type	Numeric	baseline_info	FALSE	;"";1;"Peritoneal Dialysis";2;"Hemodialysis"
+v88a_abo_incomp	ABO-incompatibe Transplantation	Numeric	baseline_info	TRUE	;"";1;"Yes";0;"No"
+v90_tx_type	Transplant Type	Numeric	baseline_info	FALSE	;"";1;"Kidney from living donor";2;"Kidney from deceased donor"
+v92_height	Height [cm]	Numeric	visit_info	TRUE	
+v97_rejection	Rejection	Numeric	outcome_info	TRUE	;"";1;"Yes";0;"No"
+v98_rejection_type	Type of Rejection	Numeric	outcome_info	FALSE	;"";1;"Acute T-cell mediated (cellular) rejection with Banff Grade Borderline";2;"Acute T-cell mediated (cellular) rejection with Banff grade IA";3;"Acute T-cell mediated (cellular) rejection with Banff grade IB";4;"Acute T-cell mediated (cellular) rejection with Banff grade IIA";5;"Acute T-cell mediated (cellular) rejection with Banff grade IIB";6;" Acute T-cell mediated (cellular) rejection with Banff grade III";7;"Acute Antibody-mediated rejection";8;"Mixed acute rejection";9;"Chronic Antibody-mediated rejection";10;"Other (free text)"
+v104_treat_other_details	Other (free text)	Text	outcome_info	FALSE	
+v115b_Other_immunosuppression	Other Immunosuppression (Text)	Text	immunosuppression_info	FALSE	
+v136b_Other_discontinued_details	Other Discontinued Details	Text	outcome_info	FALSE	
+v137b_Other_introduced_details	Other Introduced Details	Text	outcome_info	FALSE	
+v143b_reason_Other	Other Details Change	Text	outcome_info	FALSE	
+v178a_Other_Antibiotic	Other Antibiotic	TEXT	antibiotics	FALSE	
+v184a_other_Antivirals	Other Antivirals	Text	antivirals	FALSE	
+v190a_other_antimycotics	Other Antimycotics	Text	antifungal	FALSE	
+v229e_Other_Concomitant_Details	Other Concomitant Details	TEXT	comedication	FALSE	
+v270_general_comments	General Comments	TEXT	antibiotics	FALSE	
+v30f_noninfect_details	Details hospitalization cause	Text	outcome_info	FALSE	
+v30f_noninfect_details_2	Details hospitalization cause	Text	outcome_info	FALSE	
+v30f_noninfect_details_3	Details hospitalization cause	Text	outcome_info	FALSE	
+v30f_noninfect_details_4	Details hospitalization cause	Text	outcome_info	FALSE	
+v310_death_reason	Death Reason	Text	outcome_info	FALSE	
+v311_retransplantation_reason	Reason for Graft loss	Text	outcome_info	FALSE	
+v312_other_rejecton	Rejection Other	Text	outcome_info	FALSE	
+v500_sap_id	SAP ID	Text	baseline_info	FALSE	
+v65_pat_id	Patient ID	Text	baseline_info	TRUE	
+v67b_disease_other	Underlying disease - Other	TEXT	baseline_info	FALSE	
+v68b_comorbidity_other	Comorbidity - Other	TEXT	baseline_info	FALSE	
+ID_microbiome_db	Automatic unique ID patients		baseline_info	FALSE	
+ID_study_visits	Automatic unique ID visits			FALSE	
+study_center	Study center	factor	baseline_info	TRUE	n (Nierenzentrum, adult), m (Muenster, adult), k (kinderklinik, heidelberg)

@@ -1,0 +1,132 @@
+DATASET_SYMBOL
+#Symbol datasets allow the display of various symbols on the branches of the tree. For each node, one or more symbols can be defined.
+#Each symbol's color, size and position along the branch can be specified.
+
+#lines starting with a hash are comments and ignored during parsing
+#=================================================================#
+#                    MANDATORY SETTINGS                           #
+#=================================================================#
+#select the separator which is used to delimit the data below (TAB,SPACE or COMMA).This separator must be used throughout this file.
+#SEPARATOR TAB
+#SEPARATOR SPACE
+SEPARATOR COMMA
+
+#label is used in the legend table (can be changed later)
+DATASET_LABEL,example symbols
+
+#dataset color (can be changed later)
+COLOR,#ffff00
+
+#=================================================================#
+#                    OPTIONAL SETTINGS                            #
+#=================================================================#
+
+
+#=================================================================#
+#     all other optional settings can be set or changed later     #
+#           in the web interface (under 'Datasets' tab)           #
+#=================================================================#
+
+#Each dataset can have a legend, which is defined using LEGEND_XXX fields below
+#For each row in the legend, there should be one shape, color and label.
+#Optionally, you can define an exact legend position using LEGEND_POSITION_X and LEGEND_POSITION_Y. To use automatic legend positioning, do NOT define these values
+#Optionally, shape scaling can be present (LEGEND_SHAPE_SCALES). For each shape, you can define a scaling factor between 0 and 1.
+#Optionally, shapes can be inverted (LEGEND_SHAPE_INVERT). When inverted, shape border will be drawn using the selected color, and the fill color will be white.
+#To order legend entries horizontally instead of vertically, set LEGEND_HORIZONTAL to 1
+#Shape should be a number between 1 and 6, or any protein domain shape definition.
+#1: square
+#2: circle
+#3: star
+#4: right pointing triangle
+#5: left pointing triangle
+#6: checkmark
+
+#LEGEND_TITLE,Dataset legend
+#LEGEND_POSITION_X,100
+#LEGEND_POSITION_Y,100
+#LEGEND_HORIZONTAL,0
+#LEGEND_SHAPES,1,2,3
+#LEGEND_COLORS,#ff0000,#00ff00,#0000ff
+#LEGEND_LABELS,value1,value2,value3
+#LEGEND_SHAPE_SCALES,1,1,0.5
+#LEGEND_SHAPE_INVERT,0,0,0
+
+
+#largest symbol will be displayed with this size, others will be proportionally smaller.
+MAXIMUM_SIZE,50
+
+#symbols can be filled with solid color, or a gradient
+#GRADIENT_FILL,1
+
+#Internal tree nodes can be specified using IDs directly, or using the 'last common ancestor' method described in iTOL help pages
+#=================================================================#
+#       Actual data follows after the "DATA" keyword              #
+#=================================================================#
+#the following fields are required for each node:
+#ID,symbol,size,color,fill,position,label
+#symbol should be a number between 1 and 5:
+#1: rectangle
+#2: circle
+#3: star
+#4: right pointing triangle
+#5: left pointing triangle
+#6: checkmark
+
+#size can be any number. Maximum size in the dataset will be displayed using MAXIMUM_SIZE, while others will be proportionally smaller
+#color can be in hexadecimal, RGB or RGBA notation. If RGB or RGBA are used, dataset SEPARATOR cannot be comma.
+#fill can be 1 or 0. If set to 0, only the outline of the symbol will be displayed.
+#position is a number between 0 and 1 and defines the position of the symbol on the branch (for example, position 0 is exactly at the start of node branch, position 0.5 is in the middle, and position 1 is at the end)
+
+DATA
+#Examples
+
+#internal node will have a red filled circle in the middle of the branch
+#9606|184922,2,10,#ff0000,1,0.5
+
+#node 100379 will have a blue star outline at the start of the branch, half the size of the circle defined above (size is 5 compared to 10 above)
+#100379,3,5,#0000ff,0,0
+#node 100379 will also have a filled green rectangle in the middle of the branch, same size as the circle defined above (size is 10)
+#100379,1,10,#00ff00,1,0.5
+Actinomyces_naeslundii,2,-0.20495148470119,#000000,1,1
+Alloscardovia_omnicolens,2,-0.235696918315647,#000000,1,1
+Bifidobacterium_adolescentis,2,-0.515981482781653,#000000,1,1
+Bifidobacterium_longum_subsp._infantis,2,-0.439449001204064,#000000,1,1
+Collinsella_aerofaciens,2,-0.402161265219433,#000000,1,1
+Bacteroides_caccae,2,-0.435358482202236,#000000,1,1
+Bacteroides_fragilis,2,-0.352166302560858,#000000,1,1
+Bacteroides_ovatus,2,-0.51663561829813,#000000,1,1
+Bacteroides_stercoris,2,-0.506497492248164,#000000,1,1
+Bacteroides_thetaiotaomicron,2,-0.446036903095199,#000000,1,1
+Bacteroides_uniformis,2,-0.625000145454786,#000000,1,1
+Bacteroides_vulgatus,2,-0.765962191694842,#000000,1,1
+Capnocytophaga_ochracea,2,-0.200194615163359,#000000,1,1
+Odoribacter_splanchnicus,2,-0.377837539776019,#000000,1,1
+Parabacteroides_distasonis,2,-0.459054561594344,#000000,1,1
+Parabacteroides_merdae,2,-0.437136022926503,#000000,1,1
+Prevotella_copri,2,-0.750147776678141,#000000,1,1
+Blautia_hansenii,2,-0.248572829069484,#000000,1,1
+Clostridium_bolteae,2,-0.303336156095651,#000000,1,1
+Clostridium_ramosum,2,-0.275802724090608,#000000,1,1
+Clostridium_scindens,2,-0.247547162811686,#000000,1,1
+Coprococcus_comes,2,-0.411235566326237,#000000,1,1
+Dorea_formicigenerans,2,-0.362684587252828,#000000,1,1
+Enterococcus_faecalis,2,-0.220371268951049,#000000,1,1
+Eubacterium_eligens,2,-0.365680883408912,#000000,1,1
+Eubacterium_hallii,2,-0.440187722141632,#000000,1,1
+Eubacterium_rectale,2,-0.612550310932149,#000000,1,1
+Faecalibacterium_prausnitzii,2,-0.448549895327433,#000000,1,1
+Gemella_haemolysans,2,-0.208621845224498,#000000,1,1
+Gemella_morbillorum,2,-0.211868615523138,#000000,1,1
+Lactobacillus_fermentum,2,-0.220534837113238,#000000,1,1
+Lactobacillus_gasseri,2,-0.235012459635744,#000000,1,1
+Lactobacillus_paracasei,2,-0.221033371052128,#000000,1,1
+Lactobacillus_reuteri,2,-0.20092247591838,#000000,1,1
+Lactobacillus_ruminis,2,-0.303531882495391,#000000,1,1
+Roseburia_intestinalis,2,-0.39602634291876,#000000,1,1
+Ruminococcus_gnavus,2,-0.369502792508476,#000000,1,1
+Streptococcus_anginosus,2,-0.216432207357559,#000000,1,1
+Streptococcus_mitis,2,-0.200853409728677,#000000,1,1
+Streptococcus_salivarius,2,-0.35000345872225,#000000,1,1
+Streptococcus_sanguinis,2,-0.220279936679972,#000000,1,1
+Escherichia_coli,2,-0.421969384947869,#000000,1,1
+Akkermansia_muciniphila,2,-0.461739449766492,#000000,1,1

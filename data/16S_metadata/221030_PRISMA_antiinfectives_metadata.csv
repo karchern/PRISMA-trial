@@ -1,0 +1,36 @@
+class;subclass;drug_name
+antibiotic;aminoglycoside;v165a_Gentamycin
+antibiotic;antibiotic_other;v178a_Other_Antibiotic
+antibiotic;carbapeneme;v153a_Cefepim
+antibiotic;carbapeneme;v166a_Impinem
+antibiotic;carbapeneme;v168a_Meropenem
+antibiotic;cephalosporine;v154a_Ceftazidim
+antibiotic;cephalosporine;v155a_Ceftriaxon
+antibiotic;cephalosporine;v156a_Cefuroxim
+antibiotic;chinolone;v157a_Ciprofloxacin
+antibiotic;chinolone;v170a_Moxifloxacin
+antibiotic;glycopeptide;v174a_Teicoplanin
+antibiotic;glycopeptide;v177a_Vancomycin
+antibiotic;lincosamide;v159a_Clindamycin
+antibiotic;macrolide ;v152a_Azitromycin
+antibiotic;macrolide ;v158a_Clarithromycin
+antibiotic;miscellaneous;v164a_Fosfomycin
+antibiotic;nitroimidazole;v169a_Metronidazol
+antibiotic;oxazolidinone;v167a_Linezolid
+antibiotic;penicillin;v150a_Ampicilin
+antibiotic;penicillin;v151a_Ampicillin_Sulbactam
+antibiotic;penicillin;v171a_Penicillin
+antibiotic;penicillin;v172a_Piperacillin_Tazobactam
+antibiotic;penicillin;v163a_Flucloxacillin
+antibiotic;tetracycline;v161a_Doxycyclin
+antifungal;antifungal;v187a_Fluconazol
+antifungal;antifungal;v189a_Voriconazol
+antifungal;antifungal;v190a_other_antimycotics
+antifungal;antifungal;v186a_Caspofungin
+antifungal;antifungal;v185a_Amphotericin_B
+antifungal;antifungal;v188a_Nystatin
+antiviral;antiviral;v180a_Aciclovir
+antiviral;antiviral;v182a_Ganciclovir
+antiviral;antiviral;v183a_Valganciclovir
+antiviral;antiviral; v181a_Foscarnet
+antiviral;antiviral; v184a_other_Antivirals
