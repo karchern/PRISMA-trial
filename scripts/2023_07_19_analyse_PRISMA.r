@@ -36,7 +36,7 @@ pseudoCount <- 1E-4
 basedir <- '/g/scb/zeller/karcher/PRISMA/'
 setwd(basedir)
 
-profiles <- readRDS('/g/scb/zeller/karcher/PRISMA/profiles/16S/process_KLGPG_221206_PRISMA_MG/res_mapseq.rds')
+profiles <- readRDS('/g/scb/zeller/karcher/PRISMA/profiles/16S/KLGPG_221206_PRISMA_MG/res_mapseq.rds')
 meta <- read_tsv("/g/scb/zeller/karcher/PRISMA/data/16S_metadata/221227_PRISMA_16S_Overview.tsv") %>%
     rename(sampleID = Sample_ID, visit = Visit) %>%
     mutate(PSN = str_replace(PSN, "Mue", "M")) %>%
