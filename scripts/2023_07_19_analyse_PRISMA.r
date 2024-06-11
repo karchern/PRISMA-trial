@@ -410,7 +410,6 @@ ggsave(plot = genus_boxplot, filename = "plots/KLGPG_221206/genus_boxplots_v3_vi
 # 221024: Integrate clinical metadata and do first analysis of interims cohort
 #################################################################################
 
-
 # visits are uniquely identified by group_by(v65_pat_id, v62_visit_number)
 outcomeInformation <- read_csv('/g/scb/zeller/karcher/PRISMA/data/16S_metadata/221024_PRISMA_clinical_metadata.csv')
 # outcomeInformation <- read_csv('/g/scb/zeller/karcher/PRISMA/data/16S_metadata/221024_PRISMA_clinical_metadata_names_fixed_ACTUALLY_NEVERMIND_JUST_DO_IT_YOURSELF.csv')
@@ -985,7 +984,6 @@ v <- gg_color_hue(length(unique(tmp$patientID)) - 1)
     scale_color_manual(values = c(v, "darkgrey"))) %>%
     ggsave(filename = "/g/scb/zeller/karcher/PRISMA/plots/KLGPG_221206/RichnessOverTimeVsChangeImmunoSupp_v3.pdf", width = 6.0, height = 3.5)
 
-
 tmp <- clinicalMetadata %>%
     left_join(profiles %>% group_by(PSN, visit) %>% summarize(richness = sum(relAb > log10(pseudoCount))) %>%
         # For ordination, limit richness to 150 max (there is a single outlier sample...)%>%
@@ -1035,7 +1033,6 @@ pcoa_plot <- ggplot() +
 ggsave(plot = pcoa_plot, filename = "plots/KLGPG_221206/pcoa_visit_study_center.pdf", width = 6.25, height = 5)
 ggsave(plot = pcoa_plot, filename = "plots/KLGPG_221206/pcoa_visit_study_center.png", width = 6.25, height = 5)
 
-
 pcoa_plot <- ggplot() +
     geom_point(data = pcoa %>%
         left_join(clinicalMetadata %>%
@@ -1054,7 +1051,6 @@ pcoa_plot <- ggplot() +
 
 ggsave(plot = pcoa_plot, filename = "plots/KLGPG_221206/pcoa_visit_age.pdf", width = 6.25, height = 5)
 ggsave(plot = pcoa_plot, filename = "plots/KLGPG_221206/pcoa_visit_age.png", width = 6.25, height = 5)
-
 
 tmp <- pairwiseDistances %>%
     as.matrix()
@@ -1150,49 +1146,6 @@ get_family_level_barplot_for_all_samples_WIDE <- function(pObj, dataB, taxLevel 
 
     return(pObj)
 }
-
-
-
-# LONG PLOT IS OUTDATED
-# for (taxLevel in c(
-#     #"phylum",
-#     #"class",
-#     #"order",
-#     "family"
-#     #"genus"
-#     )
-#     ) {
-#         set.seed(2)
-#         #taxL <- "family"
-#         numTaxa <- 10
-#         levelsToShow <- profiles %>%
-#             mutate(relAb = 10^relAb - pseudoCount) %>%
-#             group_by(sampleID, .data[[taxL]]) %>%
-#             summarize(relAb = sum(relAb)) %>%
-#             group_by(.data[[taxL]]) %>%
-#             summarize(m = mean(relAb)) %>%
-#             arrange(desc(m)) %>%
-#             head(numTaxa) %>%
-#             pull(.data[[taxL]])
-#         getPalette <- colorRampPalette(brewer.pal(9, "Paired"))
-#         colors <- sample(getPalette(numTaxa))
-#         colors <- c(colors, "#808080", "#D3D3D3")
-
-#         ggsave(
-#             plot = get_family_level_barplot_for_all_samples_LONG(ggplot(),
-#             profiles %>%
-#                 #filter(visit != 3) %>%
-#                 mutate(visit = as.numeric(as.character(visit))),
-#             taxL,
-#             levelsToShow = levelsToShow) +
-#             scale_fill_manual(values = colors),
-
-#             filename = str_c("plots/KLGPG_221206/taxa_barplots_visit_v3_visit_3_removed_treatment_dichotomized_all__LONG_VERSION_", taxL, ".pdf", collapse = ""),
-#                 width = 6,
-#                 height = 28
-#                 )
-
-#     }
 
 for (taxLevel in c(
     # "phylum",
