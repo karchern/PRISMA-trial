@@ -1794,7 +1794,7 @@ colorVecGreen <- colorRampPalette(c(groupColors[2], "white"))(length(quantiles))
 ## IMPORTANT: Choose visitType to make sure you're correlating/looking at the right thing
 ############################################################################################
 
-#visitType <- "visit"
+# visitType <- "visit"
 visitType <- "visitMinusOne"
 genusProfiles <- profiles %>%
     mutate(relAb = (10^relAb) - pseudoCount) %>%
