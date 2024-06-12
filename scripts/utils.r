@@ -39,7 +39,48 @@ scale_x_discrete_prisma <- function(labelMap = labelLink, how = 'discrete', ...)
     }
 }
 
-clean_patient_clinical_metadata <- function(df_all) {
+make_first_and_third_letter_uppercase <- function(str) {
+    if (length(str_split(str, "")[[1]]) == 4) {
+        return(paste0(toupper(substr(str, 1, 1)), substr(str, 2, 2), toupper(substr(str, 3, 3)), substr(str, 4, 4)))
+    } else if (length(str_split(str, "")[[1]]) == 5) {
+        if (str_detect(substr(str, 1, 3), "ae") || str_detect(substr(str, 1, 3), "oe") || str_detect(substr(str, 1, 3), "ue")) {
+            return(paste0(toupper(substr(str, 1, 1)), substr(str, 2, 3), toupper(substr(str, 4, 4)), substr(str, 5, 5)))
+        } else if (str_detect(substr(str, 3, 5), "ae") || str_detect(substr(str, 3, 5), "oe") || str_detect(substr(str, 3, 5), "ue")) {
+            return(paste0(toupper(substr(str, 1, 1)), substr(str, 2, 2), toupper(substr(str, 3, 3)), substr(str, 4, 5)))
+        } else {
+            dasdafsadsdfasfsfdafsasf
+        }
+        
+    } else {
+        dasdassdaad
+    }
+}
+
+clean_patient_clinical_metadata <- function(df_all, how = "normal") {
+
+    print(how)
+    if (how != 'normal') {
+        # I have to clean the patient IDs...
+        df_all$v65_pat_id <- map(df_all$v65_pat_id, \(x) {
+            a <- str_split(x, "-", n = 3)[[1]][1]
+            a <- make_first_and_third_letter_uppercase(a)
+            b <- str_split(x, "-", n = 3)[[1]][2]
+            b <- toupper(b)
+            c <- str_split(x, "-", n = 3)[[1]][3]
+            return(str_c(a, b, c, sep = "-"))
+        })
+        # Also clean the god damn fucking date to be cosnistent with the previous format... shit
+        df_all$v13_dob <- map_chr(df_all$v13_dob, \(x) {
+            parts <- str_split(x, '[.]')[[1]]
+            year <- parts[3]
+            month <- parts[2]
+            day <- parts[1]
+            # This is super hacky but works... the oldest person was born 1948 so this way we can separate the years
+            year_prefix <- ifelse(year > 0 && year < 47, "20", "19")
+            return(str_c(str_c(year_prefix, year), month, day, sep = '-'))
+        })
+    }
+
     #### CLEAN PATIENT IDs####
     # Replace umlauts
     df_all$v65_pat_id <- gsub("ä", "ae", df_all$v65_pat_id)

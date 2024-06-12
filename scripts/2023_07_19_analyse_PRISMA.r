@@ -51,6 +51,13 @@ profiles <- map(list(profiles_tmp_batch_A_genus, profiles_tmp_batch_B_genus), \(
 meta <- read_tsv("/g/scb/zeller/karcher/PRISMA/data/16S_metadata/221227_PRISMA_16S_modelling_cohort_Batch_A_and_Batch_B_overview.tsv") %>%
     rename(sampleID = Sample_ID, visit = Visit) %>%
     mutate(PSN = str_replace(PSN, "Mue", "M")) %>%
+    mutate(PSN = str_replace(PSN, "MÜ", "M")) %>%
+    mutate(PSN = str_replace(PSN, "ä", "ae")) %>%
+    mutate(PSN = str_replace(PSN, "ö", "oe")) %>%
+    mutate(PSN = str_replace(PSN, "ü", "ue")) %>%
+    mutate(PSN = str_replace(PSN, "Ä", "AE")) %>%
+    mutate(PSN = str_replace(PSN, "Ö", "OE")) %>%
+    mutate(PSN = str_replace(PSN, "Ü", "UE")) %>%
     mutate(PSN = str_replace(PSN, "NTXM", "NZMU")) %>%
     mutate(PSN = str_replace(PSN, "-0", "-"))
 # Remove funny colnames with encoding
@@ -315,8 +322,8 @@ nice_looking_individuals <- c(
     "AnCz-KKHD-11",
     'MaBa-NZHD-10',
     # ... and these are from the modelling cohort
-    'AlGö-NZHD-28',
-    "DaBe-NZMUÜ-21"
+    'AlGoe-NZHD-28',
+    "DaBe-NZMU-21"
 )
 
 get_family_level_barplot <- function(pObj, dataB, indName, taxLevel = 'family', levelsToShow = NULL) {
@@ -436,8 +443,11 @@ ggsave(plot = genus_boxplot, filename = "plots/KLGPG_221206/genus_boxplots_v3_vi
 #################################################################################
 
 # visits are uniquely identified by group_by(v65_pat_id, v62_visit_number)
-outcomeInformation <- read_csv('/g/scb/zeller/karcher/PRISMA/data/16S_metadata/221024_PRISMA_clinical_metadata.csv')
-# outcomeInformation <- read_csv('/g/scb/zeller/karcher/PRISMA/data/16S_metadata/221024_PRISMA_clinical_metadata_names_fixed_ACTUALLY_NEVERMIND_JUST_DO_IT_YOURSELF.csv')
+# outcomeInformation <- clean_patient_clinical_metadata(read_csv('/g/scb/zeller/karcher/PRISMA/data/16S_metadata/221024_PRISMA_clinical_metadata_names_fixed_ACTUALLY_NEVERMIND_JUST_DO_IT_YOURSELF.csv'))
+outcomeInformation <- clean_patient_clinical_metadata(read_csv('/g/scb/zeller/karcher/PRISMA/data/16S_metadata/221024_PRISMA_clinical_metadata_BatchA_BatchB.csv') %>%
+    mutate(v65_pat_id = ifelse(v65_pat_id == "jobe-nzmu-08", "jobl-nzmu-08", v65_pat_id)), how = 'from_maral') %>%
+    # the metadata file contains the metadata for the entire modelling cohort, not just the new batches. so this
+    anti_join(clean_patient_clinical_metadata(read_csv('/g/scb/zeller/karcher/PRISMA/data/16S_metadata/221024_PRISMA_clinical_metadata_names_fixed_ACTUALLY_NEVERMIND_JUST_DO_IT_YOURSELF.csv')) %>% select(v65_pat_id) %>% distinct())
 clinMetCode <- read_tsv('/g/scb/zeller/karcher/PRISMA/data/16S_metadata/231024_PRISMA_clinical_metadata_codebook.tsv')
 
 # this is the tibble containing
@@ -478,10 +488,11 @@ outcomeInformation <- outcomeInformation %>%
         # cyp3a4star22 = v64_CYP3A4_22,
     ) %>%
     rename(all_of(model_covariates)) %>%
-    mutate(patientID = str_replace(patientID, "-0", '-')) %>%
     mutate(birthday = as.Date(birthday)) %>%
     mutate(age = age_calc(birthday, as.Date("2023-11-07"), "years")) %>%
     mutate(ageCategorical = ifelse(age > 18, "adult", 'non-adult'))
+
+stopifnot(all(outcomeInformation$patientID %in% profiles$PSN))
 ## [1]v4_cyp_genotype =  ";\"\";1;\"CYP3A5(*3) Positive\";2;\"CYP3A5(*3) Negative\""
 ## [2]v64_cyp_genotype_2 = ";\"\";1;\"CYP3A4(*22) Positive\";2;\"CYP3A4(*22) Negative\""
 ### Update: Information in codebook is wrong. They are already coded as True/False
