@@ -9,9 +9,9 @@ library(readxl)
 
 setwd('/g/scb/zeller/karcher/PRISMA/scripts')
 source('/home/karcher/utils/utils.r')
+source('/g/scb/zeller/karcher/PRISMA/scripts/utils.r')
 
 # Define some convenience functions
-
 labelLink <- c(
     "1" = "pre-transplant (1)",
     "2" = "pre-transplant (2)",
@@ -22,22 +22,33 @@ labelLink <- c(
     "7" = "Month 6 post-transplant"
 )
 
-scale_x_discrete_prisma <- function(labelMap = labelLink, how = 'discrete', ...) {
-    if (how == 'discrete') {
-        scale_x_discrete(labels = labelMap, ...)
-    } else if (how == "continuous") {
-        scale_x_continuous(labels = labelMap, ...)
-    }
-}
-
 rarefactionDepth <- 1E4
 pseudoCount <- 1E-4
 
 basedir <- '/g/scb/zeller/karcher/PRISMA/'
 setwd(basedir)
 
-profiles <- readRDS('/g/scb/zeller/karcher/PRISMA/profiles/16S/KLGPG_221206_PRISMA_MG/res_mapseq.rds')
+# profiles <- readRDS('/g/scb/zeller/karcher/PRISMA/profiles/16S/KLGPG_221206_PRISMA_MG/res_mapseq.rds')
+
+profiles <- readRDS('/g/scb/zeller/.snapshots/2024-06-11T2131+0200/karcher/PRISMA/profiles/16S/240718_PRISMA_INTERIMS_KLGPG_WITHOUT_QC/Results/collated/res_mapseq.rds')
+profiles <- .f_resolve_taxonomy(profiles, 'genus')
+
+# profiles_tmp_batch_A <- readRDS('/g/scb/zeller/karcher/PRISMA/profiles/16S/240718_PRISMA_MODELLING_BATCHA_WITHOUT_QC/Results/collated/res_mapseq.rds')
+# profiles_tmp_batch_B <- readRDS('/g/scb/zeller/karcher/PRISMA/profiles/16S/240718_PRISMA_MODELLING_BATCHB_WITHOUT_QC/Results/collated/res_mapseq.rds')
+# profiles_tmp_batch_A_genus <- .f_resolve_taxonomy(profiles_tmp_batch_A, 'genus')
+# profiles_tmp_batch_B_genus <- .f_resolve_taxonomy(profiles_tmp_batch_B, 'genus')
+# stopifnot(!any(colnames(profiles_tmp_batch_A_genus) %in% colnames(profiles_tmp_batch_B_genus)))
+# profiles <- map(list(profiles_tmp_batch_A_genus, profiles_tmp_batch_B_genus), \(x) x %>%
+#     as.data.frame() %>%
+#     rownames_to_column('taxon') %>%
+#     pivot_longer(-taxon) %>%
+#     rename(sampleID = name, count = value)) %>%
+#     do.call('rbind', .) %>%
+#     pivot_wider(id_cols = taxon, names_from = sampleID, values_from = count, values_fill = 0) %>%
+#     as.data.frame() %>% column_to_rownames('taxon') %>% as.matrix()
+
 meta <- read_tsv("/g/scb/zeller/karcher/PRISMA/data/16S_metadata/221227_PRISMA_16S_Overview.tsv") %>%
+    # meta <- read_tsv("/g/scb/zeller/karcher/PRISMA/data/16S_metadata/221227_PRISMA_16S_modelling_cohort_Batch_A_and_Batch_B_overview.tsv") %>%
     rename(sampleID = Sample_ID, visit = Visit) %>%
     mutate(PSN = str_replace(PSN, "Mue", "M")) %>%
     mutate(PSN = str_replace(PSN, "NTXM", "NZMU")) %>%
@@ -79,10 +90,13 @@ fullTax <- fullTax %>%
     unnest()
 
 
-profiles <- profiles[!rownames(profiles) == "Bacteria", ]
+if ("Bacteria" %in% rownames(profiles)) {
+    profiles <- profiles[!rownames(profiles) == "Bacteria", ]
+}
 colnames(profiles) <- map_chr(colnames(profiles), function(x) str_replace(x, ".*lane1", ""))
 profiles <- profiles[, !str_detect(colnames(profiles), "water")]
 colnames(profiles) <- map_chr(colnames(profiles), function(x) str_replace(x, "MG", "MG_"))
+colnames(profiles) <- map_chr(colnames(profiles), function(x) str_replace(x, "[.]singles$", ""))
 
 rownames(profiles) <- map_chr(rownames(profiles), \(x) {
     if (str_detect(x, "\\[Eubacterium\\]")) {
@@ -120,7 +134,7 @@ depth_histo <- ggplot(depths %>%
     ylab("N samples") +
     scale_y_continuous(breaks = c(1, 3, 5, 7, 9, 11))
 
-ggsave(plot = depth_histo, filename = "plots/KLGPG_221206/depth_histogram.pdf", width = 5, height = 7)
+ggsave(plot = depth_histo, filename = "/g/scb/zeller/karcher/PRISMA/plots/KLGPG_221206/depth_histogram.pdf", width = 5, height = 7)
 
 
 highDepthSamples <- depths %>%
@@ -148,7 +162,8 @@ profiles <- profiles %>%
     group_by(sampleID) %>%
     mutate(relAb = count / sum(count)) %>%
     select(-count) %>%
-    filter(genus != "not_resolved")
+    filter(genus != "not_resolved") %>%
+    filter(genus != "-1") # Should never happen - but just in case :)
 
 cumRelAbToGenus <- profiles %>%
     left_join(meta, by = 'sampleID') %>%
