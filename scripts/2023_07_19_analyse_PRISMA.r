@@ -29,8 +29,7 @@ basedir <- '/g/scb/zeller/karcher/PRISMA/'
 setwd(basedir)
 
 # profiles <- readRDS('/g/scb/zeller/karcher/PRISMA/profiles/16S/KLGPG_221206_PRISMA_MG/res_mapseq.rds')
-
-profiles <- readRDS('/g/scb/zeller/.snapshots/2024-06-11T2131+0200/karcher/PRISMA/profiles/16S/240718_PRISMA_INTERIMS_KLGPG_WITHOUT_QC/Results/collated/res_mapseq.rds')
+profiles <- readRDS('/g/scb/zeller/karcher/PRISMA/profiles/16S/240718_PRISMA_INTERIMS_KLGPG_WITHOUT_QC/Results/collated/res_mapseq.rds')
 profiles <- .f_resolve_taxonomy(profiles, 'genus')
 
 # profiles_tmp_batch_A <- readRDS('/g/scb/zeller/karcher/PRISMA/profiles/16S/240718_PRISMA_MODELLING_BATCHA_WITHOUT_QC/Results/collated/res_mapseq.rds')
@@ -38,7 +37,7 @@ profiles <- .f_resolve_taxonomy(profiles, 'genus')
 # profiles_tmp_batch_A_genus <- .f_resolve_taxonomy(profiles_tmp_batch_A, 'genus')
 # profiles_tmp_batch_B_genus <- .f_resolve_taxonomy(profiles_tmp_batch_B, 'genus')
 # stopifnot(!any(colnames(profiles_tmp_batch_A_genus) %in% colnames(profiles_tmp_batch_B_genus)))
-# profiles <- map(list(profiles_tmp_batch_A_genus, profiles_tmp_batch_B_genus), \(x) x %>%
+# `profiles <- map(list(profiles_tmp_batch_A_genus, profiles_tmp_batch_B_genus), \(x) x %>%
 #     as.data.frame() %>%
 #     rownames_to_column('taxon') %>%
 #     pivot_longer(-taxon) %>%
