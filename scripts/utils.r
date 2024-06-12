@@ -38,3 +38,24 @@ scale_x_discrete_prisma <- function(labelMap = labelLink, how = 'discrete', ...)
         scale_x_continuous(labels = labelMap, ...)
     }
 }
+
+clean_patient_clinical_metadata <- function(df_all) {
+    #### CLEAN PATIENT IDs####
+    # Replace umlauts
+    df_all$v65_pat_id <- gsub("ä", "ae", df_all$v65_pat_id)
+    df_all$v65_pat_id <- gsub("ö", "oe", df_all$v65_pat_id)
+    df_all$v65_pat_id <- gsub("ü", "ue", df_all$v65_pat_id)
+    df_all$v65_pat_id <- gsub("Ä", "AE", df_all$v65_pat_id)
+    df_all$v65_pat_id <- gsub("Ö", "OE", df_all$v65_pat_id)
+    df_all$v65_pat_id <- gsub("Ü", "UE", df_all$v65_pat_id)
+
+    # #Transform to lower characters and trim potential whitespace
+    # df_all$v65_pat_id <- tolower(df_all$v65_pat_id)
+    # df_all$v65_pat_id <- trimws(df_all$v65_pat_id,which = "both")
+
+    # Homogenize ID lenght
+    df_all$v65_pat_id <- gsub("NTXMUE", "NZMU", df_all$v65_pat_id)
+    # df_all$v65_pat_id <- gsub("-(\\d)$", "-0\\1", df_all$v65_pat_id)
+    df_all$v65_pat_id <- gsub("-0", "-", df_all$v65_pat_id)
+    return(df_all)
+}
