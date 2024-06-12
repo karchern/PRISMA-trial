@@ -30,25 +30,25 @@ setwd(basedir)
 
 # profiles <- readRDS('/g/scb/zeller/karcher/PRISMA/profiles/16S/KLGPG_221206_PRISMA_MG/res_mapseq.rds')
 
-profiles <- readRDS('/g/scb/zeller/.snapshots/2024-06-11T2131+0200/karcher/PRISMA/profiles/16S/240718_PRISMA_INTERIMS_KLGPG_WITHOUT_QC/Results/collated/res_mapseq.rds')
-profiles <- .f_resolve_taxonomy(profiles, 'genus')
+# profiles <- readRDS('/g/scb/zeller/.snapshots/2024-06-11T2131+0200/karcher/PRISMA/profiles/16S/240718_PRISMA_INTERIMS_KLGPG_WITHOUT_QC/Results/collated/res_mapseq.rds')
+# profiles <- .f_resolve_taxonomy(profiles, 'genus')
 
-# profiles_tmp_batch_A <- readRDS('/g/scb/zeller/karcher/PRISMA/profiles/16S/240718_PRISMA_MODELLING_BATCHA_WITHOUT_QC/Results/collated/res_mapseq.rds')
-# profiles_tmp_batch_B <- readRDS('/g/scb/zeller/karcher/PRISMA/profiles/16S/240718_PRISMA_MODELLING_BATCHB_WITHOUT_QC/Results/collated/res_mapseq.rds')
-# profiles_tmp_batch_A_genus <- .f_resolve_taxonomy(profiles_tmp_batch_A, 'genus')
-# profiles_tmp_batch_B_genus <- .f_resolve_taxonomy(profiles_tmp_batch_B, 'genus')
-# stopifnot(!any(colnames(profiles_tmp_batch_A_genus) %in% colnames(profiles_tmp_batch_B_genus)))
-# profiles <- map(list(profiles_tmp_batch_A_genus, profiles_tmp_batch_B_genus), \(x) x %>%
-#     as.data.frame() %>%
-#     rownames_to_column('taxon') %>%
-#     pivot_longer(-taxon) %>%
-#     rename(sampleID = name, count = value)) %>%
-#     do.call('rbind', .) %>%
-#     pivot_wider(id_cols = taxon, names_from = sampleID, values_from = count, values_fill = 0) %>%
-#     as.data.frame() %>% column_to_rownames('taxon') %>% as.matrix()
+profiles_tmp_batch_A <- readRDS('/g/scb/zeller/karcher/PRISMA/profiles/16S/240718_PRISMA_MODELLING_BATCHA_WITHOUT_QC/Results/collated/res_mapseq.rds')
+profiles_tmp_batch_B <- readRDS('/g/scb/zeller/karcher/PRISMA/profiles/16S/240718_PRISMA_MODELLING_BATCHB_WITHOUT_QC/Results/collated/res_mapseq.rds')
+profiles_tmp_batch_A_genus <- .f_resolve_taxonomy(profiles_tmp_batch_A, 'genus')
+profiles_tmp_batch_B_genus <- .f_resolve_taxonomy(profiles_tmp_batch_B, 'genus')
+stopifnot(!any(colnames(profiles_tmp_batch_A_genus) %in% colnames(profiles_tmp_batch_B_genus)))
+profiles <- map(list(profiles_tmp_batch_A_genus, profiles_tmp_batch_B_genus), \(x) x %>%
+    as.data.frame() %>%
+    rownames_to_column('taxon') %>%
+    pivot_longer(-taxon) %>%
+    rename(sampleID = name, count = value)) %>%
+    do.call('rbind', .) %>%
+    pivot_wider(id_cols = taxon, names_from = sampleID, values_from = count, values_fill = 0) %>%
+    as.data.frame() %>% column_to_rownames('taxon') %>% as.matrix()
 
-meta <- read_tsv("/g/scb/zeller/karcher/PRISMA/data/16S_metadata/221227_PRISMA_16S_Overview.tsv") %>%
-    # meta <- read_tsv("/g/scb/zeller/karcher/PRISMA/data/16S_metadata/221227_PRISMA_16S_modelling_cohort_Batch_A_and_Batch_B_overview.tsv") %>%
+# meta <- read_tsv("/g/scb/zeller/karcher/PRISMA/data/16S_metadata/221227_PRISMA_16S_Overview.tsv") %>%
+meta <- read_tsv("/g/scb/zeller/karcher/PRISMA/data/16S_metadata/221227_PRISMA_16S_modelling_cohort_Batch_A_and_Batch_B_overview.tsv") %>%
     rename(sampleID = Sample_ID, visit = Visit) %>%
     mutate(PSN = str_replace(PSN, "Mue", "M")) %>%
     mutate(PSN = str_replace(PSN, "NTXM", "NZMU")) %>%
@@ -118,7 +118,7 @@ profiles <- profiles %>%
 depths <- profiles %>%
     group_by(sampleID) %>%
     summarize(totalGenusReadCount = sum(count)) %>%
-    left_join(meta, by = 'sampleID')
+    inner_join(meta, by = 'sampleID')
 
 depth_histo <- ggplot(depths %>%
     mutate(visit = as.factor(visit))) +
@@ -136,7 +136,6 @@ depth_histo <- ggplot(depths %>%
 
 ggsave(plot = depth_histo, filename = "/g/scb/zeller/karcher/PRISMA/plots/KLGPG_221206/depth_histogram.pdf", width = 5, height = 7)
 
-
 highDepthSamples <- depths %>%
     mutate(visit = as.factor(visit)) %>%
     group_by(sampleID) %>%
@@ -147,6 +146,7 @@ profiles <- profiles %>%
     inner_join(highDepthSamples)
 
 # rarefy
+set.seed(1)
 profiles <- profiles %>%
     pivot_wider(id_cols = sampleID, names_from = genus, values_from = count) %>%
     column_to_rownames("sampleID") %>%
@@ -177,7 +177,7 @@ cumRelAbToGenus_box <- ggplot(cumRelAbToGenus %>%
     ylab("Fraction reads\nannotated to Genus-level") +
     theme_classic()
 
-ggsave(plot = cumRelAbToGenus_box, filename = "plots/KLGPG_221206/cumRelAb_boxplot.pdf", width = 4, height = 3.5)
+ggsave(plot = cumRelAbToGenus_box, filename = "/g/scb/zeller/karcher/PRISMA/plots/KLGPG_221206/cumRelAb_boxplot.pdf", width = 4, height = 3.5)
 
 profiles <- profiles %>%
     mutate(relAbOrig = relAb) %>%
@@ -382,7 +382,6 @@ for (taxL in c(
             height = 3
         )
     }
-
 }
 
 library(tidyverse)
