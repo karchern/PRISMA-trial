@@ -307,12 +307,16 @@ for (indName in unique(pcoa$PSN)) {
 }
 
 nice_looking_individuals <- c(
+    # These are from interims cohort
     "AbWa-KKHD-12",
     "RaCu-NZHD-17",
     "BaEr-NZHD-39",
     "DeZi-KKHD-2",
     "AnCz-KKHD-11",
-    'MaBa-NZHD-10'
+    'MaBa-NZHD-10',
+    # ... and these are from the modelling cohort
+    'AlGö-NZHD-28',
+    "DaBe-NZMUÜ-21"
 )
 
 get_family_level_barplot <- function(pObj, dataB, indName, taxLevel = 'family', levelsToShow = NULL) {
@@ -366,21 +370,28 @@ for (taxL in c(
     colors <- c(colors, "#808080", "#D3D3D3")
 
     # for (indName in unique(pcoa$PSN)) {
-    for (indName in c("AbWa-KKHD-12")) {
-        ggsave(
-            plot = get_family_level_barplot(ggplot(),
-                profiles %>%
-                    filter(visit != 3) %>%
-                    mutate(visit = as.numeric(as.character(visit))),
-                indName,
-                taxL,
-                levelsToShow = levelsToShow) +
-                scale_fill_manual(values = colors) + scale_x_discrete_prisma() + theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
-                guides(fill = guide_legend(ncol = 2)),
-            filename = str_c("plots/KLGPG_221206/single_ind_tax_barplots/taxa_barplots_visit_v3_visit_3_removed_treatment_dichotomized_", indName, "__", taxL, ".pdf", collapse = ""),
-            width = 5.75,
-            height = 3
-        )
+    # for (indName in c("AbWa-KKHD-12")) {
+    for (indName in nice_looking_individuals) {
+        if (indName %in% profiles$PSN) {
+            print(str_c("Producing family-level barplot over time for ", indName))
+            ggsave(
+                plot = get_family_level_barplot(ggplot(),
+                    profiles %>%
+                        filter(visit != 3) %>%
+                        mutate(visit = as.numeric(as.character(visit))),
+                    indName,
+                    taxL,
+                    levelsToShow = levelsToShow) +
+                    scale_fill_manual(values = colors) + scale_x_discrete_prisma() + theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+                    guides(fill = guide_legend(ncol = 2)),
+                filename = str_c("plots/KLGPG_221206/single_ind_tax_barplots/taxa_barplots_visit_v3_visit_3_removed_treatment_dichotomized_", indName, "__", taxL, ".pdf", collapse = ""),
+                width = 5.75,
+                height = 3
+            )
+        } else {
+            print(str_c("Skipping family-level barplot over time for ", indName, " cause individual not found in profiles..."))
+        }
+
     }
 }
 
