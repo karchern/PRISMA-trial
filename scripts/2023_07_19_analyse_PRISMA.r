@@ -1237,7 +1237,8 @@ for (taxLevel in c(
             summarize(m = mean(relAb > pseudoCount) > 0.2 && any(relAb > 0.01)) %>%
             filter(m) %>%
             select(taxa) %>%
-            filter(taxa %in% c("Roseburia", "Coprococcus", "Anaerostipes", "Enterococcus"))
+            # filter(taxa %in% c("Roseburia", "Coprococcus", "Anaerostipes", "Enterococcus"))
+            identity()
 
         genusProfiles <- profiles %>%
             mutate(relAb = (10^relAb) - pseudoCount) %>%
@@ -1487,93 +1488,93 @@ for (lmmType in c("lmms", "lmmsAdjusted")) {
     }
 }
 
-visualize_taxon_vs_complication_lineplot <- function(
-    data = NULL,
-    taxon = NULL,
-    complication = NULL,
-    visitType = NULL,
-    taxLevel = "genus"
-    ) {
-    genusProfiles <- profiles %>%
-        mutate(relAb = (10^relAb) - pseudoCount) %>%
-        mutate(taxa = .data[[taxLevel]]) %>%
-        mutate(taxa = as.character(taxa)) %>%
-        ## CRUCIAL FOR HOW MODEL IS FIT.
-        # DISTINGUISHES BETWEEN STOOL(T) <-> META(T) and STOOL(T-1) <-> META(T)
-        mutate(visit = .data[[visitType]]) %>%
-        group_by(phylum, taxa, PSN, visit) %>%
-        summarize(relAb = sum(relAb))
-    tmp <- genusProfiles %>%
-        inner_join(importantTaxa)
-    # Also add richness
-    tmp <- rbind(
-        tmp,
-        genusProfiles %>% group_by(PSN, visit) %>% summarize(relAb = sum(relAb >= 1E-4)) %>% mutate(taxa = 'richness'),
-        genusProfiles %>% group_by(PSN, visit) %>% filter(phylum == "Proteobacteria") %>% summarize(relAb = sum(relAb >= 1E-4)) %>% mutate(taxa = 'richnessProteobacteria'),
-        genusProfiles %>% group_by(PSN, visit) %>% filter(phylum == "Firmicutes") %>% summarize(relAb = sum(relAb >= 1E-4)) %>% mutate(taxa = 'richnessFirmicutes'),
-        genusProfiles %>% group_by(PSN, visit) %>% filter(phylum == "Bacteroidetes") %>% summarize(relAb = sum(relAb >= 1E-4)) %>% mutate(taxa = 'richnessBacteroidetes'),
-        genusProfiles %>% group_by(PSN, visit) %>% filter(phylum == "Actinobacteria") %>% summarize(relAb = sum(relAb >= 1E-4)) %>% mutate(taxa = 'richnessActinobacteria')) %>%
-        inner_join(
-            # Join the CLINICAL METADATA from clinicalMetadata via the appropriate visit type (T or T-1)
-            clinicalMetadata %>%
-                ungroup() %>%
-                select(
-                    patientID,
-                    .data[[visitType]],
-                    age,
-                    ageCategorical,
-                    anyABx
-                ) %>%
-                # Next I overwrite visit (afterwards used to join complication metadata) with T or T-1
-                mutate(visit = .data[[visitType]]) %>%
-                distinct() %>%
-                mutate(visit = as.numeric(as.character(visit))),
-            by = c('PSN' = 'patientID', "visit")) %>%
-        # join complication metadata (will always remain at T)
-        left_join(outcomeInformation, by = c("PSN" = 'patientID', "visit" = 'visitNumber')) %>%
-        mutate(visit = factor(visit, levels = 1:7)) %>%
-        filter(taxa == taxon) %>%
-        mutate(`log10(relAb)` = log10(relAb + pseudoCount)) %>%
-        group_by(PSN) %>%
-        nest() %>%
-        mutate(data = map(data, \(x) {
-            x['complicationEver'] <- any(x[complication])
-            return(x)
-        })) %>%
-        unnest()
-    # return(tmp)
-    tmp2 <- tmp %>%
-        # filter(.data[[complication]]) %>%
-        group_by(PSN) %>%
-        nest() %>%
-        mutate(data = map(data, \(x) {
-            m <- min(as.numeric(as.character(x %>% filter(.data[[complication]]) %>% pull(visit))))
-            x <- x %>%
-                arrange(as.numeric(as.character(visit)))
-            x <- rbind(x %>% filter(.data[[complication]]), x %>% filter(visit == m - 1))
-            return(x)
-        })) %>%
-        unnest()
-    print(tmp2)
-    p <- ggplot() +
-        geom_line(data = tmp, aes_string(x = "visit", y = "log10(relAb)", group = "PSN", color = "complicationEver"), show.legend = FALSE) +
-        # geom_point(data = tmp %>% filter(rejection), aes_string(x = "visit", y = "log10(relAb)", color = complication)) +
-        geom_line(data = tmp2, aes_string(x = "visit", y = "log10(relAb)", group = "PSN"), color = 'green') +
-        theme_classic() +
-        scale_x_discrete_prisma() +
-        scale_color_manual(values = c(
-            "FALSE" = "grey",
-            "TRUE" = "red")) +
-        theme(axis.text.x = element_text(angle = 45, hjust = 1))
-    return(p)
-}
+# visualize_taxon_vs_complication_lineplot <- function(
+#     data = NULL,
+#     taxon = NULL,
+#     complication = NULL,
+#     visitType = NULL,
+#     taxLevel = "genus"
+#     ) {
+#     genusProfiles <- profiles %>%
+#         mutate(relAb = (10^relAb) - pseudoCount) %>%
+#         mutate(taxa = .data[[taxLevel]]) %>%
+#         mutate(taxa = as.character(taxa)) %>%
+#         ## CRUCIAL FOR HOW MODEL IS FIT.
+#         # DISTINGUISHES BETWEEN STOOL(T) <-> META(T) and STOOL(T-1) <-> META(T)
+#         mutate(visit = .data[[visitType]]) %>%
+#         group_by(phylum, taxa, PSN, visit) %>%
+#         summarize(relAb = sum(relAb))
+#     tmp <- genusProfiles %>%
+#         inner_join(importantTaxa)
+#     # Also add richness
+#     tmp <- rbind(
+#         tmp,
+#         genusProfiles %>% group_by(PSN, visit) %>% summarize(relAb = sum(relAb >= 1E-4)) %>% mutate(taxa = 'richness'),
+#         genusProfiles %>% group_by(PSN, visit) %>% filter(phylum == "Proteobacteria") %>% summarize(relAb = sum(relAb >= 1E-4)) %>% mutate(taxa = 'richnessProteobacteria'),
+#         genusProfiles %>% group_by(PSN, visit) %>% filter(phylum == "Firmicutes") %>% summarize(relAb = sum(relAb >= 1E-4)) %>% mutate(taxa = 'richnessFirmicutes'),
+#         genusProfiles %>% group_by(PSN, visit) %>% filter(phylum == "Bacteroidetes") %>% summarize(relAb = sum(relAb >= 1E-4)) %>% mutate(taxa = 'richnessBacteroidetes'),
+#         genusProfiles %>% group_by(PSN, visit) %>% filter(phylum == "Actinobacteria") %>% summarize(relAb = sum(relAb >= 1E-4)) %>% mutate(taxa = 'richnessActinobacteria')) %>%
+#         inner_join(
+#             # Join the CLINICAL METADATA from clinicalMetadata via the appropriate visit type (T or T-1)
+#             clinicalMetadata %>%
+#                 ungroup() %>%
+#                 select(
+#                     patientID,
+#                     .data[[visitType]],
+#                     age,
+#                     ageCategorical,
+#                     anyABx
+#                 ) %>%
+#                 # Next I overwrite visit (afterwards used to join complication metadata) with T or T-1
+#                 mutate(visit = .data[[visitType]]) %>%
+#                 distinct() %>%
+#                 mutate(visit = as.numeric(as.character(visit))),
+#             by = c('PSN' = 'patientID', "visit")) %>%
+#         # join complication metadata (will always remain at T)
+#         left_join(outcomeInformation, by = c("PSN" = 'patientID', "visit" = 'visitNumber')) %>%
+#         mutate(visit = factor(visit, levels = 1:7)) %>%
+#         filter(taxa == taxon) %>%
+#         mutate(`log10(relAb)` = log10(relAb + pseudoCount)) %>%
+#         group_by(PSN) %>%
+#         nest() %>%
+#         mutate(data = map(data, \(x) {
+#             x['complicationEver'] <- any(x[complication])
+#             return(x)
+#         })) %>%
+#         unnest()
+#     # return(tmp)
+#     tmp2 <- tmp %>%
+#         # filter(.data[[complication]]) %>%
+#         group_by(PSN) %>%
+#         nest() %>%
+#         mutate(data = map(data, \(x) {
+#             m <- min(as.numeric(as.character(x %>% filter(.data[[complication]]) %>% pull(visit))))
+#             x <- x %>%
+#                 arrange(as.numeric(as.character(visit)))
+#             x <- rbind(x %>% filter(.data[[complication]]), x %>% filter(visit == m - 1))
+#             return(x)
+#         })) %>%
+#         unnest()
+#     print(tmp2)
+#     p <- ggplot() +
+#         geom_line(data = tmp, aes_string(x = "visit", y = "log10(relAb)", group = "PSN", color = "complicationEver"), show.legend = FALSE) +
+#         # geom_point(data = tmp %>% filter(rejection), aes_string(x = "visit", y = "log10(relAb)", color = complication)) +
+#         geom_line(data = tmp2, aes_string(x = "visit", y = "log10(relAb)", group = "PSN"), color = 'green') +
+#         theme_classic() +
+#         scale_x_discrete_prisma() +
+#         scale_color_manual(values = c(
+#             "FALSE" = "grey",
+#             "TRUE" = "red")) +
+#         theme(axis.text.x = element_text(angle = 45, hjust = 1))
+#     return(p)
+# }
 
-ggsave(
-    plot = visualize_taxon_vs_complication_lineplot(taxon = "Roseburia", complication = 'CD', visitType = "visit", taxLevel = "genus"),
-    filename = "/g/scb/zeller/karcher/PRISMA/plots/KLGPG_221206/taxon_vs_complication_test.pdf", width = 5, height = 4
-)
+# ggsave(
+#     plot = visualize_taxon_vs_complication_lineplot(taxon = "Roseburia", complication = 'CD', visitType = "visit", taxLevel = "genus"),
+#     filename = "/g/scb/zeller/karcher/PRISMA/plots/KLGPG_221206/taxon_vs_complication_test.pdf", width = 5, height = 4
+# )
 
-test
+# test
 
 # tmp <- profiles %>%
 #             mutate(relAb = (10^relAb) - pseudoCount) %>%
@@ -2068,7 +2069,7 @@ rocObjectModelSmall
 
 preTransplantProfiles <- profiles %>%
     inner_join(data.frame(visit = c(1))) %>%
-    inner_join(rbind(importantTaxa, data.frame(taxa = 'Erysipelatoclostridium')) %>% rename(genus = taxa))
+    inner_join(rbind(data.frame(taxa = c("Roseburia", "Coprococcus", "Anaerostipes", "Enterococcus", 'Erysipelatoclostridium'))) %>% rename(genus = taxa))
 # preTransplantProfiles <- profiles %>%
 #     inner_join(data.frame(visit = c(1))) %>%
 #     group_by(sampleID, family, relAb, PSN, visit) %>%
