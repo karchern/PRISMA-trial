@@ -6,6 +6,7 @@ library(ggrepel)
 library(RColorBrewer)
 library(eeptools)
 library(readxl)
+library(here)
 
 setwd('/g/scb/zeller/karcher/PRISMA/scripts')
 source('/home/karcher/utils/utils.r')
@@ -255,7 +256,7 @@ pcoa_plot <- ggplot() +
         "#facaca",
         "#fcebeb"))
 
-ggsave(plot = pcoa_plot, filename = "plots/KLGPG_221206/pcoa_visit_v1.pdf", width = 5.5, height = 3.5)
+ggsave(plot = pcoa_plot, filename = "/g/scb/zeller/karcher/PRISMA/plots/KLGPG_221206/pcoa_visit_v1.pdf", width = 5.5, height = 3.5)
 
 
 pcoa_plot <- ggplot() +
@@ -310,7 +311,7 @@ for (indName in unique(pcoa$PSN)) {
                 "#fcebeb")) +
             xlab("PCo 1") +
             ylab("PCo 2"),
-        filename = str_c("plots/KLGPG_221206/single_ind_pcoa_plots/pcoa_visit_v3_visit_3_removed_treatment_dichotomized_", indName, ".pdf", collapse = ""), width = 5.5, height = 3.5)
+        filename = str_c("/g/scb/zeller/karcher/PRISMA/plots/KLGPG_221206/single_ind_pcoa_plots/pcoa_visit_v3_visit_3_removed_treatment_dichotomized_", indName, ".pdf", collapse = ""), width = 5.5, height = 3.5)
 }
 
 nice_looking_individuals <- c(
@@ -391,7 +392,7 @@ for (taxL in c(
                     levelsToShow = levelsToShow) +
                     scale_fill_manual(values = colors) + scale_x_discrete_prisma() + theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
                     guides(fill = guide_legend(ncol = 2)),
-                filename = str_c("plots/KLGPG_221206/single_ind_tax_barplots/taxa_barplots_visit_v3_visit_3_removed_treatment_dichotomized_", indName, "__", taxL, ".pdf", collapse = ""),
+                filename = str_c("/g/scb/zeller/karcher/PRISMA/plots/KLGPG_221206/single_ind_tax_barplots/taxa_barplots_visit_v3_visit_3_removed_treatment_dichotomized_", indName, "__", taxL, ".pdf", collapse = ""),
                 width = 5.75,
                 height = 3
             )
@@ -419,7 +420,7 @@ genus_boxplot <- ggplot() +
         mutate(visit = factor(as.character(visit), levels = 1:7)), aes(x = genus, y = relAb, fill = visit)) +
     theme_classic()
 
-ggsave(plot = genus_boxplot, filename = "plots/KLGPG_221206/genus_boxplots.pdf", width = 7.25, height = 4)
+ggsave(plot = genus_boxplot, filename = "/g/scb/zeller/karcher/PRISMA/plots/KLGPG_221206/genus_boxplots.pdf", width = 7.25, height = 4)
 
 genus_boxplot <- ggplot() +
     geom_boxplot(data = tmp %>%
@@ -427,7 +428,7 @@ genus_boxplot <- ggplot() +
         mutate(visit = factor(as.character(visit), levels = 1:7)), aes(x = genus, y = relAb, fill = visit)) +
     theme_classic()
 
-ggsave(plot = genus_boxplot, filename = "plots/KLGPG_221206/genus_boxplots_v2_visit_3_removed.pdf", width = 7.25, height = 4)
+ggsave(plot = genus_boxplot, filename = "/g/scb/zeller/karcher/PRISMA/plots/KLGPG_221206/genus_boxplots_v2_visit_3_removed.pdf", width = 7.25, height = 4)
 
 genus_boxplot <- ggplot() +
     geom_boxplot(data = tmp %>%
@@ -436,7 +437,7 @@ genus_boxplot <- ggplot() +
             visit > 2 ~ "after\ntransplanation")), aes(x = genus, y = relAb, fill = treatment)) +
     theme_classic()
 
-ggsave(plot = genus_boxplot, filename = "plots/KLGPG_221206/genus_boxplots_v3_visit_3_removed_treatment_dichotomized.pdf", width = 6, height = 4)
+ggsave(plot = genus_boxplot, filename = "/g/scb/zeller/karcher/PRISMA/plots/KLGPG_221206/genus_boxplots_v3_visit_3_removed_treatment_dichotomized.pdf", width = 6, height = 4)
 
 #################################################################################
 # 221024: Integrate clinical metadata and do first analysis of interims cohort
@@ -444,8 +445,15 @@ ggsave(plot = genus_boxplot, filename = "plots/KLGPG_221206/genus_boxplots_v3_vi
 
 # visits are uniquely identified by group_by(v65_pat_id, v62_visit_number)
 # outcomeInformation <- clean_patient_clinical_metadata(read_csv('/g/scb/zeller/karcher/PRISMA/data/16S_metadata/221024_PRISMA_clinical_metadata_names_fixed_ACTUALLY_NEVERMIND_JUST_DO_IT_YOURSELF.csv'))
+set.seed(2)
 outcomeInformation <- clean_patient_clinical_metadata(read_csv('/g/scb/zeller/karcher/PRISMA/data/16S_metadata/221024_PRISMA_clinical_metadata_BatchA_BatchB.csv') %>%
-    mutate(v65_pat_id = ifelse(v65_pat_id == "jobe-nzmu-08", "jobl-nzmu-08", v65_pat_id)), how = 'from_maral') %>%
+    mutate(v65_pat_id = ifelse(v65_pat_id == "jobe-nzmu-08", "jobl-nzmu-08", v65_pat_id)) %>%
+    # Some patients might have weird, mostly emptry entries. According to maral this can go.
+    filter(!is.na(v62_visit_number) & !is.na(v61_visit_date)) %>%
+    # This shit is only for RoVo, who has 2 metadata entries for visit 6 and I cannot be fucked this shit anymore
+    group_by(v65_pat_id, v62_visit_number) %>%
+    sample_n(1) %>%
+    ungroup(), how = 'from_maral') %>%
     # the metadata file contains the metadata for the entire modelling cohort, not just the new batches. so this
     anti_join(clean_patient_clinical_metadata(read_csv('/g/scb/zeller/karcher/PRISMA/data/16S_metadata/221024_PRISMA_clinical_metadata_names_fixed_ACTUALLY_NEVERMIND_JUST_DO_IT_YOURSELF.csv')) %>% select(v65_pat_id) %>% distinct())
 clinMetCode <- read_tsv('/g/scb/zeller/karcher/PRISMA/data/16S_metadata/231024_PRISMA_clinical_metadata_codebook.tsv')
@@ -614,7 +622,7 @@ outcomeInformation <- outcomeInformation %>% mutate(CDbinary = factor(ifelse(CD 
 ##################################
 
 # clinicalMetadata summarizes, well, clinical metadata. i.e. clinical model
-# it will NOT contain outcomes (those will be)
+# it will NOT contain outcomes (those will be stored in outcomeInformation)
 clinicalMetadata <- outcomeInformation %>%
     group_by(patientID) %>%
     nest() %>%
@@ -878,7 +886,6 @@ v <- RColorBrewer::brewer.pal(length(unique(orderDFPatientID$v)), "Set1")
     ggsave(filename = "/g/scb/zeller/karcher/PRISMA/plots/KLGPG_221206/OrderComplicationOrdination.pdf", width = 7.5, height = 5)
 
 
-
 p1 <- (ggplot(data = clinicalMetadata %>%
     left_join(profiles %>% group_by(PSN, visit) %>% summarize(richness = sum(relAb > log10(pseudoCount))) %>%
         # For ordination, limit richness to 150 max (there is a single outlier sample...)
@@ -973,19 +980,19 @@ tmp <- clinicalMetadata %>%
     mutate(patientID = ifelse(complicationsOrdered != "Other Patients", patientID, "Other Patients")) %>%
     filter(!is.na(richness))
 tmp$patientID <- factor(tmp$patientID, levels = c(unique(tmp$patientID)[unique(tmp$patientID) != "Other Patients"], "Other Patients"))
-v <- RColorBrewer::brewer.pal(length(unique(tmp$patientID)) - 1, "Set2")
-(ggplot(data = tmp,
-    aes(x = visit, y = richness, color = patientID, group = patientI, alpha = complicationsOrdered)) +
-    # geom_point() +
-    # geom_boxplot() +
-    geom_line() +
-    geom_point(data = tmp %>% filter(complicationsOrdered != "Other Patients"), inherit.aes = FALSE, aes(x = visit, y = richness, color = patientID)) +
-    theme_classic() +
-    theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
-    scale_alpha_manual(values = c('patientWasHospitalized' = 1, "Other Patients" = 0.4)) +
-    NULL +
-    scale_color_manual(values = c(v, "darkgrey"))) %>%
-    ggsave(filename = "/g/scb/zeller/karcher/PRISMA/plots/KLGPG_221206/RichnessOverTimeVsHospitalization_v3.pdf", width = 6.0, height = 3.5)
+# v <- RColorBrewer::brewer.pal(length(unique(tmp$patientID)) - 1, "Set2")
+# (ggplot(data = tmp,
+#     aes(x = visit, y = richness, color = patientID, group = patientI, alpha = complicationsOrdered)) +
+#     # geom_point() +
+#     # geom_boxplot() +
+#     geom_line() +
+#     geom_point(data = tmp %>% filter(complicationsOrdered != "Other Patients"), inherit.aes = FALSE, aes(x = visit, y = richness, color = patientID)) +
+#     theme_classic() +
+#     theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+#     scale_alpha_manual(values = c('patientWasHospitalized' = 1, "Other Patients" = 0.4)) +
+#     NULL +
+#     scale_color_manual(values = c(v, "darkgrey"))) %>%
+#     ggsave(filename = "/g/scb/zeller/karcher/PRISMA/plots/KLGPG_221206/RichnessOverTimeVsHospitalization_v3.pdf", width = 6.0, height = 3.5)
 
 tmp <- clinicalMetadata %>%
     left_join(profiles %>% group_by(PSN, visit) %>% summarize(richness = sum(relAb > log10(pseudoCount))) %>%
@@ -1066,8 +1073,8 @@ pcoa_plot <- ggplot() +
     ylab("PCo 2") +
     NULL
 
-ggsave(plot = pcoa_plot, filename = "plots/KLGPG_221206/pcoa_visit_study_center.pdf", width = 6.25, height = 5)
-ggsave(plot = pcoa_plot, filename = "plots/KLGPG_221206/pcoa_visit_study_center.png", width = 6.25, height = 5)
+ggsave(plot = pcoa_plot, filename = "/g/scb/zeller/karcher/PRISMA/plots/KLGPG_221206/pcoa_visit_study_center.pdf", width = 6.25, height = 5)
+ggsave(plot = pcoa_plot, filename = "/g/scb/zeller/karcher/PRISMA/plots/KLGPG_221206/pcoa_visit_study_center.png", width = 6.25, height = 5)
 
 pcoa_plot <- ggplot() +
     geom_point(data = pcoa %>%
@@ -1085,8 +1092,8 @@ pcoa_plot <- ggplot() +
     ylab("PCo 2") +
     NULL
 
-ggsave(plot = pcoa_plot, filename = "plots/KLGPG_221206/pcoa_visit_age.pdf", width = 6.25, height = 5)
-ggsave(plot = pcoa_plot, filename = "plots/KLGPG_221206/pcoa_visit_age.png", width = 6.25, height = 5)
+ggsave(plot = pcoa_plot, filename = "/g/scb/zeller/karcher/PRISMA/plots/KLGPG_221206/pcoa_visit_age.pdf", width = 6.25, height = 5)
+ggsave(plot = pcoa_plot, filename = "/g/scb/zeller/karcher/PRISMA/plots/KLGPG_221206/pcoa_visit_age.png", width = 6.25, height = 5)
 
 tmp <- pairwiseDistances %>%
     as.matrix()
@@ -1225,7 +1232,7 @@ for (taxLevel in c(
             scale_fill_manual(values = colors) +
             NULL,
         # ggtitle("red dots indicate clinical complication\nblack asterisks indicate ABx intake (other than prophylactic)"),
-        filename = str_c("plots/KLGPG_221206/taxa_barplots_visit_v3_visit_3_removed_treatment_dichotomized_all__WIDE_VERSION_", taxL, ".pdf", collapse = ""),
+        filename = str_c("/g/scb/zeller/karcher/PRISMA/plots/KLGPG_221206/taxa_barplots_visit_v3_visit_3_removed_treatment_dichotomized_all__WIDE_VERSION_", taxL, ".pdf", collapse = ""),
         width = 8,
         height = 10
     )
@@ -1318,7 +1325,8 @@ for (taxLevel in c(
             left_join(outcomeInformation, by = c("PSN" = 'patientID', "visit" = 'visitNumber')) %>%
             mutate(visit = factor(visit, levels = 1:7))
         # for (outcomeString in c("anyComplication", "rejection", "changeImmunosuppRegimen", "hospitalization", "CD")) {
-        for (outcomeString in c("anyComplication", "rejection", "hospitalization", "CD", "CDbinary")) {
+        # for (outcomeString in c("anyComplication", "rejection", "hospitalization", "CD", "CDbinary")) {
+        for (outcomeString in c("CD", "CDbinary")) {
             # for (outcomeString in c("anyComplication", "rejection", "hospitalization", "CD")) {
             print(outcomeString)
             for (taxon in unique(tmp$taxa)) {
@@ -1819,7 +1827,6 @@ get_quantile_plot <- function(inputData, axisColumn, labelColumn, valueColumn, p
     return(p)
 }
 
-
 quantiles <- c(0.5, 0.6, 0.7, 0.8, 0.9, 1.0)
 groupColors <- c("#852020", '#21520e', "#090938")
 colorVec <- c(colorRampPalette(c(groupColors[1], "white"))(length(quantiles)),
@@ -2002,7 +2009,8 @@ p <- ggplot(outcomeInformation %>%
     )) %T>%
     write_tsv("/g/scb/zeller/karcher/PRISMA/results/CD_metabolism_map.tsv") %>%
     unnest() %>%
-    identity()
+    identity() %>%
+    mutate(CD = ifelse(CD > 5, 5, CD))
 , aes(x = visitNumber, y = CD)) +
     geom_hline(yintercept = 1, linetype = 'dotted') +
     geom_boxplot(outlier.color = NA) +
@@ -2081,9 +2089,10 @@ cdModelDataSmall <- read_tsv("/g/scb/zeller/karcher/PRISMA/results/CD_metabolism
     mutate(sex = as.factor(sex))
 
 # ATTENTION: I have to artificially include some noise cause otherwise the logistic model won't fit...
-cdModelDataSmall$cyp3a5star3[c(1)] <- TRUE
-# ATTENTION: I impute albumin/hematocrit with the mean
+# cdModelDataSmall$cyp3a5star3[c(1)] <- TRUE
+# ATTENTION: I impute albumin/hematocrit/weight with the mean
 cdModelDataSmall$firstAlbuminMeasurement[is.na(cdModelDataSmall$firstAlbuminMeasurement)] <- mean(cdModelDataSmall$firstAlbuminMeasurement[!is.na(cdModelDataSmall$firstAlbuminMeasurement)])
+cdModelDataSmall$weight[is.na(cdModelDataSmall$weight)] <- mean(cdModelDataSmall$weight[!is.na(cdModelDataSmall$weight)])
 # cdModelSmall <- glm(data = cdModelDataSmall ,
 #     formula= cdMetabolism ~ cyp3a5star3 + firstAlbuminMeasurement + ageCategorical + firstHematocritMeasurement, family = 'binomial', maxit = 100000)
 # cdModelSmall <- randomForest(cdMetabolism ~ cyp3a5star3 + firstAlbuminMeasurement + ageCategorical + firstHematocritMeasurement, data=cdModelDataSmall, proximity=TRUE)
@@ -2096,16 +2105,36 @@ set.seed(2)
 for (patientID in cdModelDataSmall$patientID) {
     test <- cdModelDataSmall[cdModelDataSmall$patientID == patientID, ]
     train <- cdModelDataSmall[cdModelDataSmall$patientID != patientID, ]
-    cdModelSmall <- randomForest(ntree = 50, mtry = 1, cdMetabolism ~ cyp3a5star3 + firstAlbuminMeasurement + ageCategorical + firstHematocritMeasurement + sex + weight, data = train, proximity = TRUE)
+    cdModelSmall <- randomForest(ntree = 50, mtry = 1, cdMetabolism ~ cyp3a5star3 + cyp3a4star22 + firstAlbuminMeasurement + ageCategorical + firstHematocritMeasurement + sex + weight, data = train, proximity = TRUE)
     p <- predict(cdModelSmall, test, type = 'prob')[, 1]
+    print(p)
+    print(length(ps))
     ps[[length(ps) + 1]] <- p
 }
 rocObjectModelSmall <- roc(predictor = unlist(ps), response = as.numeric(cdModelDataSmall$cdMetabolism))
 rocObjectModelSmall
 
+set.seed(11231)
 preTransplantProfiles <- profiles %>%
-    inner_join(data.frame(visit = c(1))) %>%
-    inner_join(rbind(data.frame(taxa = c("Roseburia", "Coprococcus", "Anaerostipes", "Enterococcus", 'Erysipelatoclostridium'))) %>% rename(genus = taxa))
+    inner_join(data.frame(visit = c(1, 2))) %>%
+    group_by(PSN) %>%
+    nest() %>%
+    mutate(data = map(data, \(x) {
+        if (1 %in% x$visit) {
+            return(x %>% filter(visit == 1))
+        } else {
+            return(x %>% filter(visit == 2))
+        }
+    })) %>%
+    unnest() %>%
+    # inner_join(rbind(data.frame(taxa = c("Roseburia", "Coprococcus", "Anaerostipes", "Enterococcus", 'Erysipelatoclostridium'))) %>% rename(genus = taxa))
+    group_by(sampleID, genus, relAb, PSN, visit) %>%
+    mutate(relAb = 10^(relAb) - pseudoCount) %>%
+    summarize(relAb = sum(relAb)) %>%
+    group_by(genus) %>%
+    filter(mean(relAb > 0.01) > 0.1) %>%
+    mutate(relAb = log10(relAb + pseudoCount))
+
 # preTransplantProfiles <- profiles %>%
 #     inner_join(data.frame(visit = c(1))) %>%
 #     group_by(sampleID, family, relAb, PSN, visit) %>%
@@ -2190,7 +2219,6 @@ illustrate_taxon_hit <- function(modelData = NULL, taxon = NULL) {
         scale_y_continuous(trans = 'log10', limits = c(0.005, 5))
     return(p)
 }
-
 
 plots <- list()
 for (g in c("Erysipelatoclostridium", "Enterococcus", "Roseburia", "Coprococcus")) {
