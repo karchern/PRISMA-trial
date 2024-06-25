@@ -20,6 +20,28 @@ source(here('scripts/utils.r'))
 obj_path <- here('objects/PRISMA.rdata')
 load_data(obj_path)
 
+preTransplantProfiles <- profiles %>%
+    inner_join(data.frame(visit = c(1, 2))) %>%
+    group_by(PSN) %>%
+    nest() %>%
+    mutate(data = map(data, \(x) {
+        if (1 %in% x$visit) {
+            return(x %>% filter(visit == 1))
+        } else {
+            return(x %>% filter(visit == 2))
+        }
+    })) %>%
+    unnest() %>%
+    group_by(sampleID, genus, relAb, PSN, visit) %>%
+    mutate(relAb = 10^(relAb) - pseudoCount) %>%
+    summarize(relAb = sum(relAb)) %>%
+    group_by(genus) %>%
+    # filter(mean(relAb > 0.01) > 0.1) %>%
+    inner_join(importantTaxaGenus %>% rename(genus = taxa)) %>%
+    mutate(relAb = log10(relAb + pseudoCount))
+
+# candidateGenera <- c("Enterococcus", "Roseburia", "Coprococcus")
+candidateGenera <- unique(preTransplantProfiles$genus)
 
 ##############################################################################
 #### Primary endpoint prediction: Predict CD at baseline from microbiome ####
@@ -126,65 +148,10 @@ ggsave(plot = p, filename = str_c(here("plots/KLGPG_221206/CDOverTime_allowDiffe
     ggsave(filename = here("plots/KLGPG_221206/cyp_genotype_CD_metabolism.pdf"))
 
 
-cdModelDataSmall <- read_tsv(here("results/CD_metabolism_map.tsv")) %>%
-    select(-data) %>%
-    left_join(
-        clinicalMetadata %>%
-            select(patientID, visit, cyp3a5star3, cyp3a4star22, firstAlbuminMeasurement, ageCategorical, sex, weight, firstHematocritMeasurement) %>%
-            # for weight
-            filter(visit == 1) %>%
-            select(-visit) %>%
-            distinct()
-    ) %>%
-    filter(cdMetabolism != 'mixed') %>%
-    mutate(cdMetabolism = factor(cdMetabolism, levels = c('low', 'high'))) %>%
-    mutate(`CD-ratio` = factor(ifelse(cdMetabolism == 'low', "high", 'low'), levels = c('low', "high"))) %>%
-    mutate(sex = as.factor(sex))
+###############################################################################
+## Fit univariate log. regression models (adjusted and unaadjusted) to get an idea of the association of the microbiome with CD
+###############################################################################
 
-# ATTENTION: I have to artificially include some noise cause otherwise the logistic model won't fit...
-# cdModelDataSmall$cyp3a5star3[c(1)] <- TRUE
-# ATTENTION: I impute albumin/hematocrit/weight with the mean
-cdModelDataSmall$firstAlbuminMeasurement[is.na(cdModelDataSmall$firstAlbuminMeasurement)] <- mean(cdModelDataSmall$firstAlbuminMeasurement[!is.na(cdModelDataSmall$firstAlbuminMeasurement)])
-cdModelDataSmall$weight[is.na(cdModelDataSmall$weight)] <- mean(cdModelDataSmall$weight[!is.na(cdModelDataSmall$weight)])
-
-resamp_n <- 5
-
-rocObjectModelSmallAll <- list()
-for (seed in 1:resamp_n) {
-    print(str_c("Seed: ", seed))
-    ps <- list()
-    set.seed(seed)
-    for (patientID in cdModelDataSmall$patientID) {
-        test <- cdModelDataSmall[cdModelDataSmall$patientID == patientID, ]
-        train <- cdModelDataSmall[cdModelDataSmall$patientID != patientID, ]
-        cdModelSmall <- randomForest(cdMetabolism ~ cyp3a5star3 + cyp3a4star22 + firstAlbuminMeasurement + ageCategorical + firstHematocritMeasurement + sex + weight, data = train, proximity = TRUE)
-        p <- predict(cdModelSmall, test, type = 'prob')[, 1]
-        ps[[length(ps) + 1]] <- p
-    }
-    rocObjectModelSmall <- roc(predictor = unlist(ps), response = as.numeric(cdModelDataSmall$cdMetabolism))
-    rocObjectModelSmall
-    rocObjectModelSmallAll[[seed]] <- list(rocObjectModelSmall, ps)
-}
-
-preTransplantProfiles <- profiles %>%
-    inner_join(data.frame(visit = c(1, 2))) %>%
-    group_by(PSN) %>%
-    nest() %>%
-    mutate(data = map(data, \(x) {
-        if (1 %in% x$visit) {
-            return(x %>% filter(visit == 1))
-        } else {
-            return(x %>% filter(visit == 2))
-        }
-    })) %>%
-    unnest() %>%
-    group_by(sampleID, genus, relAb, PSN, visit) %>%
-    mutate(relAb = 10^(relAb) - pseudoCount) %>%
-    summarize(relAb = sum(relAb)) %>%
-    group_by(genus) %>%
-    # filter(mean(relAb > 0.01) > 0.1) %>%
-    inner_join(importantTaxaGenus %>% rename(genus = taxa)) %>%
-    mutate(relAb = log10(relAb + pseudoCount))
 
 # This doesn't really make much sense anymore, and is also overfitting (see later)
 modelDataAll <- list()
@@ -322,8 +289,49 @@ for (g in c("Kopriimonas", "Erysipelatoclostridium", "Enterococcus", "Roseburia"
 ggsave(plot = wrap_plots(plots, guides = 'collect', nrow = 2),
     filename = here("plots/KLGPG_221206/cd_metabolism_hits.pdf"), width = 9, height = 5)
 
-# candidateGenera <- c("Enterococcus", "Roseburia", "Coprococcus")
-candidateGenera <- unique(preTransplantProfiles$genus)
+###############################################################################
+##  train RF models to predict CD bracket based on clinical meta + microbiome
+###############################################################################
+
+cdModelDataSmall <- read_tsv(here("results/CD_metabolism_map.tsv")) %>%
+    select(-data) %>%
+    left_join(
+        clinicalMetadata %>%
+            select(patientID, visit, cyp3a5star3, cyp3a4star22, firstAlbuminMeasurement, ageCategorical, sex, weight, firstHematocritMeasurement) %>%
+            # for weight
+            filter(visit == 1) %>%
+            select(-visit) %>%
+            distinct()
+    ) %>%
+    filter(cdMetabolism != 'mixed') %>%
+    mutate(cdMetabolism = factor(cdMetabolism, levels = c('low', 'high'))) %>%
+    mutate(`CD-ratio` = factor(ifelse(cdMetabolism == 'low', "high", 'low'), levels = c('low', "high"))) %>%
+    mutate(sex = as.factor(sex))
+
+# ATTENTION: I have to artificially include some noise cause otherwise the logistic model won't fit...
+# cdModelDataSmall$cyp3a5star3[c(1)] <- TRUE
+# ATTENTION: I impute albumin/hematocrit/weight with the mean
+cdModelDataSmall$firstAlbuminMeasurement[is.na(cdModelDataSmall$firstAlbuminMeasurement)] <- mean(cdModelDataSmall$firstAlbuminMeasurement[!is.na(cdModelDataSmall$firstAlbuminMeasurement)])
+cdModelDataSmall$weight[is.na(cdModelDataSmall$weight)] <- mean(cdModelDataSmall$weight[!is.na(cdModelDataSmall$weight)])
+
+resamp_n <- 5
+
+rocObjectModelSmallAll <- list()
+for (seed in 1:resamp_n) {
+    print(str_c("Seed: ", seed))
+    ps <- list()
+    set.seed(seed)
+    for (patientID in cdModelDataSmall$patientID) {
+        test <- cdModelDataSmall[cdModelDataSmall$patientID == patientID, ]
+        train <- cdModelDataSmall[cdModelDataSmall$patientID != patientID, ]
+        cdModelSmall <- randomForest(cdMetabolism ~ cyp3a5star3 + cyp3a4star22 + firstAlbuminMeasurement + ageCategorical + firstHematocritMeasurement + sex + weight, data = train, proximity = TRUE)
+        p <- predict(cdModelSmall, test, type = 'prob')[, 1]
+        ps[[length(ps) + 1]] <- p
+    }
+    rocObjectModelSmall <- roc(predictor = unlist(ps), response = as.numeric(cdModelDataSmall$cdMetabolism))
+    rocObjectModelSmall
+    rocObjectModelSmallAll[[seed]] <- list(rocObjectModelSmall, ps)
+}
 
 cdModelDataBig <- cdModelDataSmall %>%
     inner_join(preTransplantProfiles %>%
