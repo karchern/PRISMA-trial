@@ -64,7 +64,7 @@ p <- ggplot(outcomeInformation %>%
     arrange(visitNumber) %>%
     filter(visitNumber >= tpFilterLow) %>%
     filter(visitNumber <= tpFilterHigh) %>%
-    mutate(visitNumber = factor(visitNumber, levels = levels(visitNumber)[(tpFilter + 1):length(levels(visitNumber))])) %>%
+    mutate(visitNumber = factor(visitNumber, levels = levels(visitNumber)[(tpFilterLow):length(levels(visitNumber))])) %>%
     nest() %>%
     # mutate(varianceCD = map_dbl(data, \(x) {
     #     return(var(x$CD))
@@ -111,6 +111,7 @@ p <- ggplot(outcomeInformation %>%
 ggsave(plot = p, filename = str_c(here("plots/KLGPG_221206/CDOverTime_allowDifference_"), allowDifference, ".pdf"), width = 5, height = 5.5)
 # ggsave(plot = p, filename = here("plots/KLGPG_221206/CDOverTime.png"), width = 5, height = 5.5)
 
+
 (clinicalMetadata %>%
     select(patientID, cyp3a5star3, cyp3a4star22) %>%
     distinct() %>%
@@ -125,6 +126,20 @@ ggsave(plot = p, filename = str_c(here("plots/KLGPG_221206/CDOverTime_allowDiffe
     ylab("Number of patients")) %>%
     ggsave(filename = here("plots/KLGPG_221206/cyp_genotypes.pdf"), width = 4, height = 2.5)
 
+cdModelDataSmall <- read_tsv(here("results/CD_metabolism_map.tsv")) %>%
+    select(-data) %>%
+    left_join(
+        clinicalMetadata %>%
+            select(patientID, visit, cyp3a5star3, cyp3a4star22, firstAlbuminMeasurement, ageCategorical, sex, weight, firstHematocritMeasurement) %>%
+            # for weight
+            filter(visit == 1) %>%
+            select(-visit) %>%
+            distinct()
+    ) %>%
+    filter(cdMetabolism != 'mixed') %>%
+    mutate(cdMetabolism = factor(cdMetabolism, levels = c('low', 'high'))) %>%
+    mutate(`CD-ratio` = factor(ifelse(cdMetabolism == 'low', "high", 'low'), levels = c('low', "high"))) %>%
+    mutate(sex = as.factor(sex))
 
 (read_tsv(here("results/CD_metabolism_map.tsv")) %>%
     select(-data) %>%
@@ -202,7 +217,8 @@ resTibble <- tibble(genus = names(res), models = res) %>%
     left_join(profiles %>% ungroup() %>% select(genus, phylum) %>% distinct(), by = c('genus' = 'genus')) %>%
     relocate(genus, phylum) %>%
     arrange(taxon_pvalue) %>%
-    mutate(taxon_estimate = ifelse(taxon_estimate < -5, -5, taxon_estimate))
+    mutate(taxon_estimate = ifelse(taxon_estimate < -5, -5, taxon_estimate)) %>%
+    mutate(taxon_estimate = ifelse(taxon_estimate > 5, 5, taxon_estimate))
 
 resTibbleUnadjusted <- tibble(genus = names(resUnadjusted), models = resUnadjusted) %>%
     mutate(summary = map(models, summary)) %>%
@@ -224,7 +240,8 @@ resTibbleUnadjusted <- tibble(genus = names(resUnadjusted), models = resUnadjust
     left_join(profiles %>% ungroup() %>% select(genus, phylum) %>% distinct(), by = c('genus' = 'genus')) %>%
     relocate(genus, phylum) %>%
     arrange(taxon_pvalue) %>%
-    mutate(taxon_estimate = ifelse(taxon_estimate < -5, -5, taxon_estimate))
+    mutate(taxon_estimate = ifelse(taxon_estimate < -5, -5, taxon_estimate)) %>%
+    mutate(taxon_estimate = ifelse(taxon_estimate > 5, 5, taxon_estimate))
 
 lab_adjusted <- resTibble %>% filter(taxon_pvalue < 0.1)
 pAdjusted <- ggplot(data = resTibble) +
@@ -293,20 +310,7 @@ ggsave(plot = wrap_plots(plots, guides = 'collect', nrow = 2),
 ##  train RF models to predict CD bracket based on clinical meta + microbiome
 ###############################################################################
 
-cdModelDataSmall <- read_tsv(here("results/CD_metabolism_map.tsv")) %>%
-    select(-data) %>%
-    left_join(
-        clinicalMetadata %>%
-            select(patientID, visit, cyp3a5star3, cyp3a4star22, firstAlbuminMeasurement, ageCategorical, sex, weight, firstHematocritMeasurement) %>%
-            # for weight
-            filter(visit == 1) %>%
-            select(-visit) %>%
-            distinct()
-    ) %>%
-    filter(cdMetabolism != 'mixed') %>%
-    mutate(cdMetabolism = factor(cdMetabolism, levels = c('low', 'high'))) %>%
-    mutate(`CD-ratio` = factor(ifelse(cdMetabolism == 'low', "high", 'low'), levels = c('low', "high"))) %>%
-    mutate(sex = as.factor(sex))
+
 
 # ATTENTION: I have to artificially include some noise cause otherwise the logistic model won't fit...
 # cdModelDataSmall$cyp3a5star3[c(1)] <- TRUE
