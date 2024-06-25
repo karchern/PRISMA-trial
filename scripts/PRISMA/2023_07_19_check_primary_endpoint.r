@@ -132,6 +132,8 @@ cdModelDataSmall <- read_tsv(here("results/CD_metabolism_map.tsv")) %>%
         clinicalMetadata %>%
             select(patientID, visit, cyp3a5star3, cyp3a4star22, firstAlbuminMeasurement, ageCategorical, sex, weight, firstHematocritMeasurement) %>%
             # for weight
+            filter(!is.na(cyp3a5star3)) %>%
+            filter(!is.na(cyp3a4star22)) %>%
             filter(visit == 1) %>%
             select(-visit) %>%
             distinct()
