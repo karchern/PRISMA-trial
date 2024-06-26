@@ -11,7 +11,7 @@ library(ggembl)
 # source('/home/karcher/utils/utils.r')
 source(here('scripts/utils.r'))
 
-obj_path <- here('objects/PRISMA.rdata')
+obj_path <- here('objects/PRISMA_idtaxa.rdata')
 
 load_data(obj_path)
 

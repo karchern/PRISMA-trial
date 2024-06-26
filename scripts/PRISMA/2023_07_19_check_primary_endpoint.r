@@ -19,10 +19,11 @@ source(here('scripts/utils.r'))
 resamp_n_model <- 1
 
 # Load data
-obj_path <- here('objects/PRISMA.rdata')
+obj_path <- here('objects/PRISMA_idtaxa.rdata')
 load_data(obj_path)
 
 preTransplantProfiles <- profiles %>%
+    mutate(genus = str_replace_all(genus, "-", "_")) %>%
     inner_join(data.frame(visit = c(1, 2))) %>%
     group_by(PSN) %>%
     nest() %>%
@@ -297,7 +298,7 @@ ggsave(pAdjusted + pUnadjusted + scatter_plot + plot_layout(guides = 'collect'),
     ggsave(filename = here("plots/KLGPG_221206/glm_cd_cyp_tax_profiles.pdf"), width = 12, height = 3.5)
 
 plots <- list()
-for (g in c("Kopriimonas", "Erysipelatoclostridium", "Enterococcus", "Roseburia", "Coprococcus", "Parasutterella", 'Sutterella')) {
+for (g in c("Kopriimonas", "Erysipelatoclostridium", "Enterococcus", "Roseburia", "Coprococcus", "Coprococcus_A", "Parasutterella", 'Sutterella', "Ruminococcus_C")) {
     # ggsave(filename = str_c(here("plots/KLGPG_221206/"), g, ".pdf"), width = 5, height = 4)
     plots[[length(plots) + 1]] <- illustrate_taxon_hit(do.call('rbind', modelDataAll), g) + ggtitle(g) + theme(plot.title = element_text(size = 8, face = "bold"))
 }
@@ -330,7 +331,8 @@ get_model_performances <- function(
     model_feature_string = None,
     resamp_n_model = 1,
     microbial_feature_selection_internal = TRUE,
-    top_microbial_features_if_microbial_feature_selection_internal = 5
+    top_microbial_features_if_microbial_feature_selection_internal = 10,
+    model_type = "RF"
     ) {
     model_feature_string_original <- model_feature_string
     rocObjectsAll <- list()
@@ -356,12 +358,27 @@ get_model_performances <- function(
                     arrange(p_val) %>%
                     head(top_microbial_features_if_microbial_feature_selection_internal) %>%
                     select(genus)
+                # Caution: For testing only, since overfitting
+                # top_microbial_features <- data.frame(genus = c("Coprococcus"))
                 train <- cbind(train_rest, train_only_microbial[, colnames(train_only_microbial) %in% top_microbial_features$genus])
                 model_feature_string <- c(model_feature_string_non_microbial, model_feature_string_original[model_feature_string_original %in% top_microbial_features$genus])
             }
-            print(model_feature_string)
-            cdModel <- randomForest(as.formula(str_c("cdMetabolism ~ ", str_c(model_feature_string, collapse = " + "))), data = train, proximity = TRUE)
-            p <- predict(cdModel, test, type = 'prob')[, 1]
+            input_formula <- as.formula(str_c("cdMetabolism ~ ", str_c(model_feature_string, collapse = " + ")))
+            if (model_type == "RF") {
+                cdModel <- randomForest(formula = input_formula, data = train, proximity = TRUE)
+            } else if (model_type == "logreg") {
+                cdModel <- glm(formula = input_formula, data = train, family = 'binomial')
+            } else {
+                asdadsd
+            }
+            if (model_type == "RF") {
+                p <- predict(cdModel, test, type = 'prob')[, 1]
+            } else if (model_type == "logreg") {
+                p <- predict(cdModel, test, type = 'response')
+            } else {
+                asdadsds
+            }
+
             ps[[length(ps) + 1]] <- p
         }
         rocObject <- roc(predictor = unlist(ps), response = as.numeric(model_data$cdMetabolism))
@@ -370,7 +387,6 @@ get_model_performances <- function(
     }
     return(rocObjectsAll)
 }
-
 
 # ATTENTION: I have to artificially include some noise cause otherwise the logistic model won't fit...
 # cdModelDataSmall$cyp3a5star3[c(1)] <- TRUE
@@ -395,7 +411,7 @@ rocObjectModelBigAll <- get_model_performances(
     model_data = cdModelDataBig,
     model_feature_string = c("cyp3a5star3", "cyp3a4star22", "firstAlbuminMeasurement", "ageCategorical", "firstHematocritMeasurement", "sex", "weight", candidateGenera),
     resamp_n_model = resamp_n_model,
-    microbial_feature_selection_internal = TRUE)
+    microbial_feature_selection_internal = FALSE)
 
 cdModelDataOnlyTax <- cdModelDataSmall %>%
     inner_join(preTransplantProfiles %>%
@@ -408,7 +424,7 @@ rocObjectModelOnlyTaxAll <- get_model_performances(
     model_data = cdModelDataOnlyTax,
     model_feature_string = candidateGenera,
     resamp_n_model = resamp_n_model,
-    microbial_feature_selection_internal = TRUE)
+    microbial_feature_selection_internal = FALSE)
 
 cdModels <- tibble(
     resamp = 1:resamp_n_model,

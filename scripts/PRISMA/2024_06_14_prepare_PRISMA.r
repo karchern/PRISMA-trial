@@ -212,7 +212,7 @@ profiles <- profiles %>%
     mutate(relAbOrig = relAb) %>%
     mutate(relAb = log10(relAb + pseudoCount)) %>%
     inner_join(meta, by = c("sampleID", "batch")) %>%
-    left_join(fullTax, by = 'genus')
+    left_join(fullTax %>% mutate(genus = str_replace(genus, "^g__", "")), by = 'genus')
 
 profiles <- profiles %>%
     # mutate(visitMinusOne = visit - 1) %>%
