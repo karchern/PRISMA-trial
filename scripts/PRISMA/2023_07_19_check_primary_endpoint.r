@@ -16,7 +16,7 @@ library(ggrepel)
 # source('/home/karcher/utils/utils.r')
 source(here('scripts/utils.r'))
 
-resamp_n_model <- 1
+resamp_n_model <- 5
 
 # Load data
 obj_path <- here('objects/PRISMA_idtaxa.rdata')
@@ -364,6 +364,7 @@ get_model_performances <- function(
                 model_feature_string <- c(model_feature_string_non_microbial, model_feature_string_original[model_feature_string_original %in% top_microbial_features$genus])
             }
             input_formula <- as.formula(str_c("cdMetabolism ~ ", str_c(model_feature_string, collapse = " + ")))
+            print(input_formula)
             if (model_type == "RF") {
                 cdModel <- randomForest(formula = input_formula, data = train, proximity = TRUE)
             } else if (model_type == "logreg") {
