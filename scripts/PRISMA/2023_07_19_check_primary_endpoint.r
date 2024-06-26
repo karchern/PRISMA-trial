@@ -49,7 +49,7 @@ candidateGenera <- unique(preTransplantProfiles$genus)
 
 metabCDThreshold <- 1
 tpFilterLow <- 4
-tpFilterHigh <- 4
+tpFilterHigh <- 7
 allowDifference <- 1
 
 if (abs(tpFilterHigh - tpFilterLow) <= 1) {
@@ -128,7 +128,7 @@ ggsave(plot = p, filename = str_c(here("plots/KLGPG_221206/CDOverTime_allowDiffe
 
 cdModelDataSmall <- read_tsv(here("results/CD_metabolism_map.tsv")) %>%
     select(-data) %>%
-    inner_join(
+    left_join(
         clinicalMetadata %>%
             select(patientID, visit, cyp3a5star3, cyp3a4star22, firstAlbuminMeasurement, ageCategorical, sex, weight, firstHematocritMeasurement) %>%
             # for weight
