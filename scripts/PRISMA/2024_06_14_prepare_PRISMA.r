@@ -680,7 +680,7 @@ importantTaxaGenus <- profiles %>%
     group_by(taxa, PSN, visit) %>%
     summarize(relAb = sum(relAb)) %>%
     group_by(taxa) %>%
-    summarize(m = mean(relAb > pseudoCount) > 0.05, mm = any(relAb > 0.01)) %>%
+    summarize(m = mean(relAb > pseudoCount) > 0.2, mm = any(relAb > 0.01)) %>%
     filter(m & mm) %>%
     select(taxa) %>%
     # filter(taxa %in% c("Roseburia", "Coprococcus", "Anaerostipes", "Enterococcus"))
