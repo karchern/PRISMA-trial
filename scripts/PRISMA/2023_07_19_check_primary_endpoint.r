@@ -32,13 +32,8 @@ preTransplantProfiles <- profiles %>%
         }
     })) %>%
     unnest() %>%
-    group_by(sampleID, genus, relAb, PSN, visit) %>%
-    mutate(relAb = 10^(relAb) - pseudoCount) %>%
-    summarize(relAb = sum(relAb)) %>%
-    group_by(genus) %>%
     # filter(mean(relAb > 0.01) > 0.1) %>%
-    inner_join(importantTaxaGenus %>% rename(genus = taxa)) %>%
-    mutate(relAb = log10(relAb + pseudoCount))
+    inner_join(importantTaxaGenus %>% rename(genus = taxa))
 
 # candidateGenera <- c("Enterococcus", "Roseburia", "Coprococcus")
 candidateGenera <- unique(preTransplantProfiles$genus)
