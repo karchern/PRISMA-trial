@@ -49,7 +49,7 @@ candidateGenera <- unique(preTransplantProfiles$genus)
 
 metabCDThreshold <- 1
 tpFilterLow <- 4
-tpFilterHigh <- 7
+tpFilterHigh <- 4
 allowDifference <- 1
 
 if (abs(tpFilterHigh - tpFilterLow) <= 1) {
