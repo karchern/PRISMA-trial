@@ -11,13 +11,15 @@ library(ggembl)
 # source('/home/karcher/utils/utils.r')
 source(here('scripts/utils.r'))
 
-
-obj_path <- here('objects/PRISMA.rdata')
+obj_path <- here('objects/PRISMA_idtaxa.rdata')
 
 print("Loading profiles...")
-profiles_interim <- readRDS('/g/scb/zeller/karcher/PRISMA/profiles/16S/240718_PRISMA_INTERIMS_KLGPG_WITHOUT_QC/Results/collated/res_mapseq.rds')
-profiles_tmp_batch_A <- readRDS(here('profiles/16S/240718_PRISMA_MODELLING_BATCHA_WITHOUT_QC/Results/collated/res_mapseq.rds'))
-profiles_tmp_batch_B <- readRDS(here('profiles/16S/240718_PRISMA_MODELLING_BATCHB_WITHOUT_QC/Results/collated/res_mapseq.rds'))
+# profiles_interim <- readRDS(here('profiles/16S/240718_PRISMA_INTERIMS_KLGPG_WITHOUT_QC/Results/collated/res_mapseq.rds'))
+profiles_interim <- readRDS(here('profiles/16S/240718_PRISMA_INTERIMS_KLGPG_WITHOUT_QC/Results/collated/res_IDTaxa.rds'))
+# profiles_tmp_batch_A <- readRDS(here('profiles/16S/240718_PRISMA_MODELLING_BATCHA_WITHOUT_QC/Results/collated/res_mapseq.rds'))
+profiles_tmp_batch_A <- readRDS(here('profiles/16S/240718_PRISMA_MODELLING_BATCHA_WITHOUT_QC/Results/collated/res_IDTaxa.rds'))
+# profiles_tmp_batch_B <- readRDS(here('profiles/16S/240718_PRISMA_MODELLING_BATCHB_WITHOUT_QC/Results/collated/res_mapseq.rds'))
+profiles_tmp_batch_B <- readRDS(here('profiles/16S/240718_PRISMA_MODELLING_BATCHB_WITHOUT_QC/Results/collated/res_IDTaxa.rds'))
 profiles_tmp_batch_A_genus <- .f_resolve_taxonomy(profiles_tmp_batch_A, 'genus')
 profiles_tmp_batch_B_genus <- .f_resolve_taxonomy(profiles_tmp_batch_B, 'genus')
 profiles_interim <- .f_resolve_taxonomy(profiles_interim, 'genus')
@@ -58,7 +60,8 @@ meta <- read_tsv(here("data/16S_metadata/221227_PRISMA_16S_modelling_cohort_Batc
 # Remove funny colnames with encoding
 meta <- meta[, !str_detect(colnames(meta), "Conc")]
 meta <- meta[, !str_detect(colnames(meta), "10 ng")]
-fullTax <- read_tsv(here("data/MAPseq_AlessioCurated.tax"), col_names = F, show_col_types = FALSE)
+# fullTax <- read_tsv(here("data/MAPseq_AlessioCurated.tax"), col_names = F, show_col_types = FALSE)
+fullTax <- read_tsv(here('data/gtdbk_tax_r207.tab'), col_names = F, show_col_types = FALSE)
 fullTax <- fullTax %>%
     mutate(X6 = map_chr(X6, \(x) {
         if (str_detect(x, "\\[Eubacterium\\]")) {
