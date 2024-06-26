@@ -20,6 +20,8 @@ source(here('scripts/utils.r'))
 obj_path <- here('objects/PRISMA.rdata')
 load_data(obj_path)
 
+resamp_n_model <- 5
+
 preTransplantProfiles <- profiles %>%
     inner_join(data.frame(visit = c(1, 2))) %>%
     group_by(PSN) %>%
@@ -315,10 +317,8 @@ ggsave(plot = wrap_plots(plots, guides = 'collect', nrow = 2),
 cdModelDataSmall$firstAlbuminMeasurement[is.na(cdModelDataSmall$firstAlbuminMeasurement)] <- mean(cdModelDataSmall$firstAlbuminMeasurement[!is.na(cdModelDataSmall$firstAlbuminMeasurement)])
 cdModelDataSmall$weight[is.na(cdModelDataSmall$weight)] <- mean(cdModelDataSmall$weight[!is.na(cdModelDataSmall$weight)])
 
-resamp_n <- 5
-
 rocObjectModelSmallAll <- list()
-for (seed in 1:resamp_n) {
+for (seed in 1:resamp_n_model) {
     print(str_c("Seed: ", seed))
     ps <- list()
     set.seed(seed)
@@ -343,7 +343,7 @@ cdModelDataBig <- cdModelDataSmall %>%
 
 
 rocObjectModelBigAll <- list()
-for (seed in 1:resamp_n) {
+for (seed in 1:resamp_n_model) {
     print(str_c("Seed: ", seed))
     ps <- list()
     set.seed(seed)
@@ -366,7 +366,7 @@ cdModelDataOnlyTax <- cdModelDataSmall %>%
         pivot_wider(id_cols = patientID, names_from = genus, values_from = relAb))
 
 rocObjectModelOnlyTaxAll <- list()
-for (seed in 1:resamp_n) {
+for (seed in 1:resamp_n_model) {
     print(str_c("Seed: ", seed))
     ps <- list()
     set.seed(seed)
@@ -382,7 +382,7 @@ for (seed in 1:resamp_n) {
 }
 
 cdModels <- tibble(
-    resamp = 1:resamp_n,
+    resamp = 1:resamp_n_model,
     small_roc = map(rocObjectModelSmallAll, \(x) x[[1]]),
     big_roc = map(rocObjectModelBigAll, \(x) x[[1]]),
     onlytax_roc = map(rocObjectModelOnlyTaxAll, \(x) x[[1]]),
@@ -431,7 +431,7 @@ pClinical <- ggplot() +
     geom_text(data = cdModels %>%
         filter(Features == 'Clinical model') %>%
         group_by(Features) %>%
-        summarize(label = round(median(auc), 3), y = y[1]), aes(x = 0.4, y = y, label = str_c(Features, ": ", label)), inherit.aes = FALSE, hjust = 0) +
+        summarize(label = round(median(auc), 3), y = y[1]), aes(x = 0.275, y = y, label = str_c(Features, ": ", label)), inherit.aes = FALSE, hjust = 0) +
     NULL
 
 ggsave(
@@ -450,7 +450,7 @@ pC <- ggplot() +
     geom_text(data = cdModels %>%
         filter(Features == 'CM + microbiome') %>%
         group_by(Features) %>%
-        summarize(label = round(median(auc), 3), y = y[1]), aes(x = 0.4, y = y, label = str_c(Features, ": ", label)), inherit.aes = FALSE, hjust = 0) +
+        summarize(label = round(median(auc), 3), y = y[1]), aes(x = 0.275, y = y, label = str_c(Features, ": ", label)), inherit.aes = FALSE, hjust = 0) +
     NULL
 
 ggsave(
@@ -469,7 +469,7 @@ pC <- ggplot() +
     geom_text(data = cdModels %>%
         filter(Features == "microbiome") %>%
         group_by(Features) %>%
-        summarize(label = round(median(auc), 3), y = y[1]), aes(x = 0.4, y = y, label = str_c(Features, ": ", label)), inherit.aes = FALSE, hjust = 0) +
+        summarize(label = round(median(auc), 3), y = y[1]), aes(x = 0.275, y = y, label = str_c(Features, ": ", label)), inherit.aes = FALSE, hjust = 0) +
     NULL
 
 ggsave(
@@ -486,7 +486,7 @@ pAll <- ggplot() +
     ylab("True Positive Rate") +
     geom_text(data = cdModels %>%
         group_by(Features) %>%
-        summarize(label = round(median(auc), 3), y = y[1]), aes(x = 0.4, y = y, label = str_c(Features, ": ", label)), inherit.aes = FALSE, hjust = 0) +
+        summarize(label = round(median(auc), 3), y = y[1]), aes(x = 0.275, y = y, label = str_c(Features, ": ", label)), inherit.aes = FALSE, hjust = 0) +
     NULL
 
 ggsave(
