@@ -20,7 +20,7 @@ source(here('scripts/utils.r'))
 obj_path <- here('objects/PRISMA.rdata')
 load_data(obj_path)
 
-resamp_n_model <- 5
+resamp_n_model <- 1
 
 preTransplantProfiles <- profiles %>%
     inner_join(data.frame(visit = c(1, 2))) %>%
