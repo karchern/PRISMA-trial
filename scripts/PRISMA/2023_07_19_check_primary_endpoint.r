@@ -16,11 +16,11 @@ library(ggrepel)
 # source('/home/karcher/utils/utils.r')
 source(here('scripts/utils.r'))
 
+resamp_n_model <- 1
+
 # Load data
 obj_path <- here('objects/PRISMA.rdata')
 load_data(obj_path)
-
-resamp_n_model <- 1
 
 preTransplantProfiles <- profiles %>%
     inner_join(data.frame(visit = c(1, 2))) %>%
@@ -123,23 +123,6 @@ ggsave(plot = p, filename = str_c(here("plots/KLGPG_221206/CDOverTime_allowDiffe
     ylab("Number of patients")) %>%
     ggsave(filename = here("plots/KLGPG_221206/cyp_genotypes.pdf"), width = 4, height = 2.5)
 
-cdModelDataSmall <- read_tsv(here("results/CD_metabolism_map.tsv")) %>%
-    select(-data) %>%
-    inner_join(
-        clinicalMetadata %>%
-            select(patientID, visit, cyp3a5star3, cyp3a4star22, firstAlbuminMeasurement, ageCategorical, sex, weight, firstHematocritMeasurement) %>%
-            # for weight
-            filter(!is.na(cyp3a5star3)) %>%
-            filter(!is.na(cyp3a4star22)) %>%
-            filter(visit == 1) %>%
-            select(-visit) %>%
-            distinct()
-    ) %>%
-    filter(cdMetabolism != 'mixed') %>%
-    mutate(cdMetabolism = factor(cdMetabolism, levels = c('low', 'high'))) %>%
-    mutate(`CD-ratio` = factor(ifelse(cdMetabolism == 'low', "high", 'low'), levels = c('low', "high"))) %>%
-    mutate(sex = as.factor(sex))
-
 (read_tsv(here("results/CD_metabolism_map.tsv")) %>%
     select(-data) %>%
     left_join(
@@ -166,6 +149,23 @@ cdModelDataSmall <- read_tsv(here("results/CD_metabolism_map.tsv")) %>%
 ## Fit univariate log. regression models (adjusted and unaadjusted) to get an idea of the association of the microbiome with CD
 ###############################################################################
 
+
+cdModelDataSmall <- read_tsv(here("results/CD_metabolism_map.tsv")) %>%
+    select(-data) %>%
+    inner_join(
+        clinicalMetadata %>%
+            select(patientID, visit, cyp3a5star3, cyp3a4star22, firstAlbuminMeasurement, ageCategorical, sex, weight, firstHematocritMeasurement) %>%
+            # for weight
+            filter(!is.na(cyp3a5star3)) %>%
+            filter(!is.na(cyp3a4star22)) %>%
+            filter(visit == 1) %>%
+            select(-visit) %>%
+            distinct()
+    ) %>%
+    filter(cdMetabolism != 'mixed') %>%
+    mutate(cdMetabolism = factor(cdMetabolism, levels = c('low', 'high'))) %>%
+    mutate(`CD-ratio` = factor(ifelse(cdMetabolism == 'low', "high", 'low'), levels = c('low', "high"))) %>%
+    mutate(sex = as.factor(sex))
 
 # This doesn't really make much sense anymore, and is also overfitting (see later)
 modelDataAll <- list()
@@ -309,6 +309,67 @@ ggsave(plot = wrap_plots(plots, guides = 'collect', nrow = 2),
 ##  train RF models to predict CD bracket based on clinical meta + microbiome
 ###############################################################################
 
+get_wilcox_results_for_internal_filtering <- function(
+    tab,
+    ground_truth
+    ) {
+    wilcox_test_results <- list()
+    ground_truth_true <- ground_truth == 'low'
+    ground_truth_false <- ground_truth == 'high'
+    for (genus in colnames(tab)) {
+        wilcox_test_results[[genus]] <- wilcox.test(
+            x = tab[[genus]][ground_truth_true],
+            y = tab[[genus]][ground_truth_false],
+        )
+    }
+    return(wilcox_test_results)
+}
+
+get_model_performances <- function(
+    model_data,
+    model_feature_string = None,
+    resamp_n_model = 1,
+    microbial_feature_selection_internal = TRUE,
+    top_microbial_features_if_microbial_feature_selection_internal = 5
+    ) {
+    model_feature_string_original <- model_feature_string
+    rocObjectsAll <- list()
+    for (seed in 1:resamp_n_model) {
+        print(str_c("Seed: ", seed))
+        ps <- list()
+        set.seed(seed)
+        for (patientID in model_data$patientID) {
+            model_feature_string <- model_feature_string_original
+            model_feature_string_non_microbial <- model_feature_string_original[!model_feature_string_original %in% candidateGenera]
+            test <- model_data[model_data$patientID == patientID, ]
+            train <- model_data[model_data$patientID != patientID, ]
+            if (microbial_feature_selection_internal) {
+                all_microbial_features <- candidateGenera
+                train_only_microbial <- train[, colnames(train) %in% all_microbial_features]
+                train_rest <- train[, !colnames(train) %in% all_microbial_features]
+                wilcox_test_results <- get_wilcox_results_for_internal_filtering(
+                    train_only_microbial,
+                    train$cdMetabolism)
+                top_microbial_features <- enframe(wilcox_test_results) %>%
+                    rename(genus = name) %>%
+                    mutate(p_val = map_dbl(value, \(x) x$p.value)) %>%
+                    arrange(p_val) %>%
+                    head(top_microbial_features_if_microbial_feature_selection_internal) %>%
+                    select(genus)
+                train <- cbind(train_rest, train_only_microbial[, colnames(train_only_microbial) %in% top_microbial_features$genus])
+                model_feature_string <- c(model_feature_string_non_microbial, model_feature_string_original[model_feature_string_original %in% top_microbial_features$genus])
+            }
+            print(model_feature_string)
+            cdModel <- randomForest(as.formula(str_c("cdMetabolism ~ ", str_c(model_feature_string, collapse = " + "))), data = train, proximity = TRUE)
+            p <- predict(cdModel, test, type = 'prob')[, 1]
+            ps[[length(ps) + 1]] <- p
+        }
+        rocObject <- roc(predictor = unlist(ps), response = as.numeric(model_data$cdMetabolism))
+        rocObject
+        rocObjectsAll[[seed]] <- list(rocObject, ps)
+    }
+    return(rocObjectsAll)
+}
 
 
 # ATTENTION: I have to artificially include some noise cause otherwise the logistic model won't fit...
@@ -317,22 +378,11 @@ ggsave(plot = wrap_plots(plots, guides = 'collect', nrow = 2),
 cdModelDataSmall$firstAlbuminMeasurement[is.na(cdModelDataSmall$firstAlbuminMeasurement)] <- mean(cdModelDataSmall$firstAlbuminMeasurement[!is.na(cdModelDataSmall$firstAlbuminMeasurement)])
 cdModelDataSmall$weight[is.na(cdModelDataSmall$weight)] <- mean(cdModelDataSmall$weight[!is.na(cdModelDataSmall$weight)])
 
-rocObjectModelSmallAll <- list()
-for (seed in 1:resamp_n_model) {
-    print(str_c("Seed: ", seed))
-    ps <- list()
-    set.seed(seed)
-    for (patientID in cdModelDataSmall$patientID) {
-        test <- cdModelDataSmall[cdModelDataSmall$patientID == patientID, ]
-        train <- cdModelDataSmall[cdModelDataSmall$patientID != patientID, ]
-        cdModelSmall <- randomForest(cdMetabolism ~ cyp3a5star3 + cyp3a4star22 + firstAlbuminMeasurement + ageCategorical + firstHematocritMeasurement + sex + weight, data = train, proximity = TRUE)
-        p <- predict(cdModelSmall, test, type = 'prob')[, 1]
-        ps[[length(ps) + 1]] <- p
-    }
-    rocObjectModelSmall <- roc(predictor = unlist(ps), response = as.numeric(cdModelDataSmall$cdMetabolism))
-    rocObjectModelSmall
-    rocObjectModelSmallAll[[seed]] <- list(rocObjectModelSmall, ps)
-}
+rocObjectModelSmallAll <- get_model_performances(
+    model_data = cdModelDataSmall,
+    model_feature_string = c("cyp3a5star3", "cyp3a4star22", "firstAlbuminMeasurement", "ageCategorical", "firstHematocritMeasurement", "sex", "weight"),
+    resamp_n_model = resamp_n_model,
+    microbial_feature_selection_internal = FALSE)
 
 cdModelDataBig <- cdModelDataSmall %>%
     inner_join(preTransplantProfiles %>%
@@ -341,22 +391,11 @@ cdModelDataBig <- cdModelDataSmall %>%
         rename(patientID = PSN) %>%
         pivot_wider(id_cols = patientID, names_from = genus, values_from = relAb))
 
-
-rocObjectModelBigAll <- list()
-for (seed in 1:resamp_n_model) {
-    print(str_c("Seed: ", seed))
-    ps <- list()
-    set.seed(seed)
-    for (patientID in cdModelDataBig$patientID) {
-        test <- cdModelDataBig[cdModelDataBig$patientID == patientID, ]
-        train <- cdModelDataBig[cdModelDataBig$patientID != patientID, ]
-        cdModelBig <- randomForest(formula = as.formula(str_c("cdMetabolism ~ cyp3a5star3 + firstAlbuminMeasurement + ageCategorical + firstHematocritMeasurement + sex + weight + ", str_c(candidateGenera, collapse = " + "))), data = train, proximity = FALSE)
-        p <- predict(cdModelBig, test, type = 'prob')[, 1]
-        ps[[length(ps) + 1]] <- p
-    }
-    rocObjectModelBig <- roc(predictor = unlist(ps), response = as.numeric(cdModelDataBig$cdMetabolism))
-    rocObjectModelBigAll[[seed]] <- list(rocObjectModelBig, ps)
-}
+rocObjectModelBigAll <- get_model_performances(
+    model_data = cdModelDataBig,
+    model_feature_string = c("cyp3a5star3", "cyp3a4star22", "firstAlbuminMeasurement", "ageCategorical", "firstHematocritMeasurement", "sex", "weight", candidateGenera),
+    resamp_n_model = resamp_n_model,
+    microbial_feature_selection_internal = TRUE)
 
 cdModelDataOnlyTax <- cdModelDataSmall %>%
     inner_join(preTransplantProfiles %>%
@@ -365,21 +404,11 @@ cdModelDataOnlyTax <- cdModelDataSmall %>%
         rename(patientID = PSN) %>%
         pivot_wider(id_cols = patientID, names_from = genus, values_from = relAb))
 
-rocObjectModelOnlyTaxAll <- list()
-for (seed in 1:resamp_n_model) {
-    print(str_c("Seed: ", seed))
-    ps <- list()
-    set.seed(seed)
-    for (patientID in cdModelDataOnlyTax$patientID) {
-        test <- cdModelDataOnlyTax[cdModelDataOnlyTax$patientID == patientID, ]
-        train <- cdModelDataOnlyTax[cdModelDataOnlyTax$patientID != patientID, ]
-        cdModelonlyTax <- randomForest(formula = as.formula(str_c("cdMetabolism ~ ", str_c(candidateGenera, collapse = " + "))), data = train, proximity = FALSE)
-        p <- predict(cdModelonlyTax, test, type = 'prob')[, 1]
-        ps[[length(ps) + 1]] <- p
-    }
-    rocObjectModelOnlyTax <- roc(predictor = unlist(ps), response = as.numeric(cdModelDataOnlyTax$cdMetabolism))
-    rocObjectModelOnlyTaxAll[[seed]] <- list(rocObjectModelOnlyTax, ps)
-}
+rocObjectModelOnlyTaxAll <- get_model_performances(
+    model_data = cdModelDataOnlyTax,
+    model_feature_string = candidateGenera,
+    resamp_n_model = resamp_n_model,
+    microbial_feature_selection_internal = TRUE)
 
 cdModels <- tibble(
     resamp = 1:resamp_n_model,
