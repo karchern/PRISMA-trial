@@ -128,7 +128,7 @@ ggsave(plot = p, filename = str_c(here("plots/KLGPG_221206/CDOverTime_allowDiffe
 
 cdModelDataSmall <- read_tsv(here("results/CD_metabolism_map.tsv")) %>%
     select(-data) %>%
-    left_join(
+    inner_join(
         clinicalMetadata %>%
             select(patientID, visit, cyp3a5star3, cyp3a4star22, firstAlbuminMeasurement, ageCategorical, sex, weight, firstHematocritMeasurement) %>%
             # for weight
