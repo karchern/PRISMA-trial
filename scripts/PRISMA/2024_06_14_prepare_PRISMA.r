@@ -12,9 +12,10 @@ library(ggembl)
 source(here('scripts/utils.r'))
 
 obj_path <- here('objects/PRISMA_idtaxa.rdata')
+#obj_path <- here('objects/PRISMA.rdata')
 
 print("Loading profiles...")
-# profiles_interim <- readRDS(here('profiles/16S/240718_PRISMA_INTERIMS_KLGPG_WITHOUT_QC/Results/collated/res_mapseq.rds'))
+#profiles_interim <- readRDS(here('profiles/16S/240718_PRISMA_INTERIMS_KLGPG_WITHOUT_QC/Results/collated/res_mapseq.rds'))
 profiles_interim <- readRDS(here('profiles/16S/240718_PRISMA_INTERIMS_KLGPG_WITHOUT_QC/Results/collated/res_IDTaxa.rds'))
 # profiles_tmp_batch_A <- readRDS(here('profiles/16S/240718_PRISMA_MODELLING_BATCHA_WITHOUT_QC/Results/collated/res_mapseq.rds'))
 profiles_tmp_batch_A <- readRDS(here('profiles/16S/240718_PRISMA_MODELLING_BATCHA_WITHOUT_QC/Results/collated/res_IDTaxa.rds'))
@@ -60,8 +61,8 @@ meta <- read_tsv(here("data/16S_metadata/221227_PRISMA_16S_modelling_cohort_Batc
 # Remove funny colnames with encoding
 meta <- meta[, !str_detect(colnames(meta), "Conc")]
 meta <- meta[, !str_detect(colnames(meta), "10 ng")]
-# fullTax <- read_tsv(here("data/MAPseq_AlessioCurated.tax"), col_names = F, show_col_types = FALSE)
-fullTax <- read_tsv(here('data/gtdbk_tax_r207.tab'), col_names = F, show_col_types = FALSE)
+fullTax <- read_tsv(here("data/MAPseq_AlessioCurated.tax"), col_names = F, show_col_types = FALSE)
+# fullTax <- read_tsv(here('data/gtdbk_tax_r207.tab'), col_names = F, show_col_types = FALSE)
 fullTax <- fullTax %>%
     mutate(X6 = map_chr(X6, \(x) {
         if (str_detect(x, "\\[Eubacterium\\]")) {
@@ -215,7 +216,6 @@ profiles <- profiles %>%
     left_join(fullTax %>% mutate(genus = str_replace(genus, "^g__", "")), by = 'genus')
 
 profiles <- profiles %>%
-    # mutate(visitMinusOne = visit - 1) %>%
     group_by(PSN, visit) %>%
     nest() %>%
     group_by(PSN) %>%
@@ -223,13 +223,12 @@ profiles <- profiles %>%
     mutate(data = map(data, function(x) {
         x <- x %>%
             mutate(visit = as.numeric(as.character(visit))) %>%
-            arrange(visit) %>%
-            mutate(visitMinusOne = c(NA, visit[1:(length(visit) - 1)]))
+            arrange(visit)
         return(x)
     })) %>%
     unnest() %>%
     unnest() %>%
-    relocate(sampleID, genus, relAb, relAbOrig, PSN, visit, visitMinusOne)
+    relocate(sampleID, genus, relAb, relAbOrig, PSN, visit)
 
 pairwiseDistances <- pivot_wider(profiles, id_cols = genus, names_from = c(sampleID, batch), values_from = relAb, names_sep = "___") %>%
     column_to_rownames("genus") %>%
@@ -245,6 +244,7 @@ pairwiseDistancesIdentityEuclidean <- pivot_wider(profiles, id_cols = genus, nam
     t() %>%
     vegdist(method = "euclidean", k = 2)
 
+set.seed(1)
 pcoa <- cmdscale(pairwiseDistances) %>%
     as.data.frame() %>%
     rownames_to_column("tmp") %>%
@@ -377,6 +377,7 @@ outcomeInformation <- outcomeInformation %>%
     })) %>%
     select(-all_of(colnames(.)[str_detect(colnames(.), 'tacDose')])) %>%
     mutate(CD = tacConcentration / finTacDose)
+# mutate(CD = tacConcentration / (finTacDose / bodySurfaceArea))
 stopifnot(all(abxInfo$allAbx == outcomeInformation %>% select(all_of(abxInfo$allAbx)) %>% colnames()))
 # Same for ABx
 ####################################
@@ -434,7 +435,7 @@ outcomeInformation <- outcomeInformation %>%
 outcomeInformation <- outcomeInformation %>%
     mutate(across(c(hospitalization, rejection, changeImmunosuppRegimen), \(x) ifelse(is.na(x), FALSE, x)))
 
-outcomeInformation <- outcomeInformation %>% mutate(CDbinary = factor(ifelse(CD > 1, "high", "low"), levels = c('low', 'high')))
+outcomeInformation <- outcomeInformation %>% mutate(CDbinary = factor(ifelse(CD >= 1, "high", "low"), levels = c('low', 'high')))
 
 ##################################
 ##################################
@@ -624,22 +625,19 @@ clinicalMetadata <- outcomeInformation %>%
         x <- x %>%
             mutate(visit = as.numeric(as.character(visit))) %>%
             arrange(visit) %>%
-            mutate(visitMinusOne = c(NA, visit[1:(length(visit) - 1)]))
+            mutate(visitPlusOne = c(visit[2:(length(visit))], NA))
         return(x)
     })) %>%
     unnest() %>%
     unnest() %>%
-    # mutate(visitMinusOne = visit - 1) %>%
     mutate(visit = factor(visit, levels = 1:7)) %>%
-    mutate(visitMinusOne = factor(visitMinusOne, levels = 1:6)) %>%
+    mutate(visitPlusOne = factor(visitPlusOne, levels = 2:7)) %>%
     # I'm removing data nested data as I'm fiddling with the visit column and I don't want to overwrite things by mistake...
     select(-data)
 
 # For reason that will become clear later on (essentially, in certain situations, I want to predict outcome at T from microbiome + metadata at T-1),
 # I hear distinguish between outcomeInformation and clinicalMetadata
 
-# So to avoid confusion, outcomeInforamtion really only contains information relating to outcomes.
-# In this object I will never mess with the time
 outcomeInformation <- outcomeInformation %>%
     ungroup() %>%
     mutate(anyComplication = pmap_lgl(list(hospitalization, rejection, changeImmunosuppRegimen), function(a, b, c) {
@@ -653,16 +651,32 @@ outcomeInformation <- outcomeInformation %>%
         changeImmunosuppRegimen,
         CD,
         CDbinary) %>%
-    # I'm kapping CD ratio at 5
+    rename(visit = visitNumber) %>%
+    group_by(patientID, visit) %>%
+    nest() %>%
+    group_by(patientID) %>%
+    nest() %>%
+
+    mutate(data = map(data, function(x) {
+        x <- x %>%
+            mutate(visit = as.numeric(as.character(visit))) %>%
+            arrange(visit) %>%
+            # mutate(visitPlusOne = c(visit[2:(length(visit))], NA))
+            # mutate(visitPlusOne = c(NA, visit[1:(length(visit) - 1)]))
+            mutate(visitPlusOne = visit - 1)
+        return(x)
+    })) %>%
+    unnest() %>%
+    unnest() %>%
+    mutate(visit = factor(visit, levels = 1:7)) %>%
+    mutate(visitPlusOne = factor(visitPlusOne, levels = 1:6)) %>%
     mutate(CD = ifelse(CD > 5, 5, CD))
-# cyp3a4star22,
-# cyp3a5star3)
 
 # Transform patientID into factor where ordering corresponds to a meaningful ordering
 orderDFPatientID <- clinicalMetadata %>%
     rename(PSN = patientID) %>%
     group_by(PSN) %>%
-    left_join(outcomeInformation %>% select(patientID, visitNumber, CD, rejection, changeImmunosuppRegimen, hospitalization) %>% mutate(visitNumber = as.factor(visitNumber)), by = c("PSN" = 'patientID', "visit" = 'visitNumber')) %>%
+    left_join(outcomeInformation %>% select(patientID, visit, CD, rejection, changeImmunosuppRegimen, hospitalization), by = c("PSN" = 'patientID', "visit" = 'visit')) %>%
     summarize(v = case_when(
         any(rejection) ~ "patientHadRejection",
         any(changeImmunosuppRegimen) ~ "patientHadChangeImmunoSuppRegime",

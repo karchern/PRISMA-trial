@@ -1,8 +1,8 @@
 # Define some convenience functions
 
 time_point_colors <- c(
-    "#a5c2fc", # light blue
-    "#82aafa", # slightly less intense blue
+    "#3a7bfc", # light blue
+    "#3a7bfc", # slightly less intense blue
     "#3a7bfc", # original blue
     "#ff3636",
     "#f87676",
@@ -75,9 +75,9 @@ get_family_level_barplot_for_all_samples_WIDE <- function(pObj, dataB, taxLevel 
         # clinicalMetadata %>% select(patientID, visit, anyComplicationEver2, anyABx, ABxSubClass, hospitalization, rejection, changeImmunosuppRegimen),
         left_join(
             outcomeInformation %>%
-                select(patientID, visitNumber, rejection, changeImmunosuppRegimen, hospitalization) %>%
-                mutate(visitNumber = as.factor(visitNumber)),
-            by = c('PSN' = 'patientID', "visit" = 'visitNumber'))
+                select(patientID, visit, rejection, changeImmunosuppRegimen, hospitalization) %>%
+                mutate(visit = as.factor(visit)),
+            by = c('PSN' = 'patientID', "visit" = 'visit'))
 
     dataB$PSN <- factor(dataB$PSN, levels = orderDFPatientID$PSN)
 
@@ -89,19 +89,19 @@ get_family_level_barplot_for_all_samples_WIDE <- function(pObj, dataB, taxLevel 
         geom_bar(data = dataB,
             aes(x = PSN, y = relAb, fill = taxa), position = 'stack', stat = 'identity') +
         geom_text(data = outcomeInformation %>%
-            rename(PSN = patientID, visit = visitNumber) %>%
+            rename(PSN = patientID, visit = visit) %>%
             # select(PSN, visit, rejection) %>%
             mutate(rejection = ifelse(rejection, "R", "")) %>%
             mutate(PSN = factor(PSN, levels = orderDFPatientID$PSN)),
         aes(x = PSN, y = 1.525, label = rejection), size = 2.5) +
         geom_text(data = outcomeInformation %>%
-            rename(PSN = patientID, visit = visitNumber) %>%
+            rename(PSN = patientID, visit = visit) %>%
             # select(PSN, visit, changeImmunosuppRegimen) %>%
             mutate(changeImmunosuppRegimen = ifelse(changeImmunosuppRegimen, "C", "")) %>%
             mutate(PSN = factor(PSN, levels = orderDFPatientID$PSN)),
         aes(x = PSN, y = 1.375, label = changeImmunosuppRegimen), size = 2.5) +
         geom_text(data = outcomeInformation %>%
-            rename(PSN = patientID, visit = visitNumber) %>%
+            rename(PSN = patientID, visit = visit) %>%
             # select(PSN, visit, changeImmunosuppRegimen) %>%
             mutate(hospitalization = ifelse(hospitalization, "H", "")) %>%
             mutate(PSN = factor(PSN, levels = orderDFPatientID$PSN)),
@@ -384,7 +384,7 @@ get_quantile_plot <- function(inputData, axisColumn, labelColumn, valueColumn, p
 }
 
 
-compareTaxAssocsQuantilePlots <- function(taxon = NULL, complication = "anyComplication", simpleLegend = TRUE) {
+compareTaxAssocsQuantilePlots <- function(taxon = NULL, complication = "anyComplication", simpleLegend = TRUE, plot_kind = 'boxplot') {
     tmp2 <- genusProfiles %>%
         filter(taxa == taxon) %>%
         mutate(anyABx = ifelse(anyABx, "ABx", "no ABx")) %>%
@@ -402,15 +402,18 @@ compareTaxAssocsQuantilePlots <- function(taxon = NULL, complication = "anyCompl
         }
     }
 
+    # browser()
     p <- ggplot(tmp2, aes(x = as.factor(anyABx), y = relAb)) +
-        # geom_boxplot(aes_string(x = "anyABx", y = "relAb", fill = complication)) +
-        geom_quantileplot(aes(fill = CDbinary), quantilesP = quantilesP) +
-        scale_fill_quantile(cdMetabColors, quantilesP) +
-        theme_presentation()
+        geom_boxplot(aes_string(x = "anyABx", y = "relAb", fill = complication))
+    # geom_quantileplot(aes(fill = CDbinary), quantilesP = quantilesP) +
+    # scale_fill_quantile(cdMetabColors, quantilesP) +
+    theme_presentation()
+    # browser()
     # # Remove NAs
     # tmp2 <- tmp2 %>%
     #     filter(!if_any(all_of(c('anyABx', complication, "relAb")), is.na))
     # p <- get_quantile_plot(tmp2, "anyABx", complication, "relAb", plotGroup = NA, expectedNumLevels = 2)
+    # return(p)
     p <- p +
         ggtitle(str_c("LMM raw p-val for\n",
             taxon, '\n',
@@ -435,8 +438,8 @@ compareTaxAssocsScatter <- function(taxon = NULL, outcomeMeasure = "CD", lmmObje
     tmp2 <- tmp2[!is.na(tmp2$outcome), ]
     # print(tmp2 %>% select(relAb, outcome, postTransplant, anyABx))
     # return(tmp2)
-    p <- ggplot(data = tmp2, aes(x = relAb, y = outcome, color = PSN)) +
-        geom_point() +
+    p <- ggplot(data = tmp2, aes(x = relAb, y = outcome)) +
+        geom_point(alpha = 0.2) +
         theme_presentation() +
         facet_grid(. ~ anyABx) +
         NULL
@@ -452,22 +455,65 @@ compareTaxAssocsScatter <- function(taxon = NULL, outcomeMeasure = "CD", lmmObje
     return(p)
 }
 
-illustrate_taxon_hit <- function(modelData = NULL, taxon = NULL) {
+illustrate_taxon_hit <- function(modelData = NULL, taxon = NULL, meta = NULL, by_batch = FALSE) {
     modelData <- modelData %>%
         filter(genus == taxon) %>%
         rename(`Tacrolimus\nmetabolism` = cdMetabolism) %>%
-        mutate(relAb = (10^relAb) * 100)
+        mutate(relAb = (10^(relAb) * 100)) %>%
+        inner_join(
+            meta %>%
+                select(PSN, batch) %>%
+                distinct(),
+            by = c('patientID' = "PSN")) %>%
+        mutate(batch = ifelse(batch == "interim", "interim", "rest\nmodel. cohort"))
     p <- ggplot() +
         geom_boxplot(
             data = modelData,
             aes(x = `Tacrolimus\nmetabolism`, y = relAb, fill = `Tacrolimus\nmetabolism`), outlier.color = NA) +
         geom_jitter(
             data = modelData,
-            aes(x = `Tacrolimus\nmetabolism`, y = relAb, fill = `Tacrolimus\nmetabolism`), position = position_jitter()) +
+            aes(x = `Tacrolimus\nmetabolism`, y = relAb, fill = `Tacrolimus\nmetabolism`), position = position_jitter(), alpha = 0.3) +
         theme_presentation() +
         ylab("Bacterial\nrelative abundance [%]") +
         # scale_fill_manual(values = c('low' = "#4a5dca", "high" = "#d43e3e")) +
         scale_fill_manual(values = cdMetabColors) +
-        scale_y_continuous(trans = 'log10', limits = c(0.005, 5))
+        scale_y_continuous(trans = 'log10', limits = c(0.005, max(modelData$relAb) * 1.05)) +
+        {
+            if (by_batch) {
+                facet_wrap(~batch, scales = "free")
+            } else {
+                NULL
+            }
+        } +
+        NULL
     return(p)
+}
+
+
+diagnose_time_shift <- function(df, PSN = NULL) {
+    df <- ungroup(df)
+    if (is.null(PSN)) {
+        set.seed(13213)
+        PS <- sample(df$PSN, 1)
+        print(PS)
+    }
+    return(df %>%
+        ungroup() %>%
+        select(PSN, visit, anyABx, anyComplication) %>%
+        rename(`co-medication` = anyABx, complication = anyComplication) %>%
+        distinct() %>%
+        mutate(visit = as.numeric(as.character(visit))) %>%
+        filter(PSN == PS) %>%
+        select(-PSN) %>%
+        pivot_longer(-visit) %>%
+        ggplot() +
+        geom_tile(aes(x = visit, y = name, fill = value)) +
+        # ylim(c(1,7)) +
+        # scale_y_continuous(breaks = 1:7) +
+        theme_presentation() +
+        ylab("Visit") +
+        ggtitle(PS) +
+        scale_x_continuous(breaks = 1:7) +
+        scale_fill_manual(values = c("TRUE" = "darkgreen", "FALSE" = "darkblue")) +
+        NULL)
 }

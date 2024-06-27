@@ -11,8 +11,8 @@ library(ggembl)
 # source('/home/karcher/utils/utils.r')
 source(here('scripts/utils.r'))
 
-obj_path <- here('objects/PRISMA_idtaxa.rdata')
-
+# obj_path <- here('objects/PRISMA_idtaxa.rdata')
+obj_path <- here('objects/PRISMA.rdata')
 load_data(obj_path)
 
 pcoa_plot <- ggplot() +
@@ -25,12 +25,14 @@ pcoa_plot <- ggplot() +
 ggsave(plot = pcoa_plot, filename = here("plots/KLGPG_221206/pcoa_visit_v1.pdf"), width = 5.5, height = 3.5)
 
 pcoa_plot <- ggplot() +
-    geom_point(data = pcoa %>%
-        mutate(visit = factor(map_chr(pcoa$visit, \(x) labelLink[x]), levels = labelLink)), aes(x = V1, y = V2, color = visit)) +
+    geom_point(data =
+        pcoa %>%
+            filter(visit != 3) %>%
+            mutate(visit = factor(map_chr(visit, \(x) labelLink[x]), levels = labelLink)), aes(x = V1, y = V2, color = visit)) +
     theme_presentation() +
     xlab("PCo 1") +
     ylab("PCo 2") +
-    scale_color_manual(values = time_point_colors)
+    scale_color_manual(values = time_point_colors[c(1:2, 4:7)])
 
 ggsave(plot = pcoa_plot, filename = here("plots/KLGPG_221206/pcoa_visit_v2.pdf"), width = 8, height = 3.5)
 

@@ -76,7 +76,7 @@ for (taxLevel in c(
             geom_rect(
                 data = outcomeInformation %>%
                     filter(CD > 2) %>%
-                    rename(PSN = patientID, visit = visitNumber) %>%
+                    rename(PSN = patientID) %>%
                     mutate(PSN = factor(PSN, levels = orderDFPatientID$PSN)) %>%
                     mutate(PSN = as.numeric(PSN)),
                 aes(xmin = PSN - 0.5, xmax = PSN + 0.5, ymin = 0, ymax = 1), color = 'black', fill = alpha("grey", 0),

@@ -17,9 +17,14 @@ library(ggrepel)
 source(here('scripts/utils.r'))
 
 resamp_n_model <- 5
+# model_type <- "RF"
+model_type <- "logreg"
+
+candidate_genera <- c("Tyzzerella", "Anaerosporobacter", "Coprococcus", "Roseburia", "Dorea", "Faecalibacterium")
 
 # Load data
-obj_path <- here('objects/PRISMA_idtaxa.rdata')
+# obj_path <- here('objects/PRISMA_idtaxa.rdata')
+obj_path <- here('objects/PRISMA.rdata')
 load_data(obj_path)
 
 preTransplantProfiles <- profiles %>%
@@ -46,8 +51,8 @@ candidateGenera <- unique(preTransplantProfiles$genus)
 ##############################################################################
 
 metabCDThreshold <- 1
-tpFilterLow <- 4
-tpFilterHigh <- 4
+tpFilterLow <- 5
+tpFilterHigh <- 5
 allowDifference <- 1
 
 if (abs(tpFilterHigh - tpFilterLow) <= 1) {
@@ -55,14 +60,15 @@ if (abs(tpFilterHigh - tpFilterLow) <= 1) {
     allowDifference <- 0
 }
 
-p <- ggplot(outcomeInformation %>%
-    mutate(visitNumber = factor(visitNumber, levels = 1:7, ordered = TRUE)) %>%
+data <- outcomeInformation %>%
+    mutate(visit = factor(visit, levels = 1:7, ordered = TRUE)) %>%
     group_by(patientID) %>%
     filter(!is.na(CD)) %>%
-    arrange(visitNumber) %>%
-    filter(visitNumber >= tpFilterLow) %>%
-    filter(visitNumber <= tpFilterHigh) %>%
-    mutate(visitNumber = factor(visitNumber, levels = levels(visitNumber)[(tpFilterLow):length(levels(visitNumber))])) %>%
+    arrange(visit) %>%
+    filter(visit >= tpFilterLow) %>%
+    filter(visit <= tpFilterHigh) %>%
+    # mutate(visit = factor(visit, levels = levels(visit)[(tpFilterLow):length(levels(visit))])) %>%
+    mutate(visit = factor(visit, levels = 4:7)) %>%
     nest() %>%
     # mutate(varianceCD = map_dbl(data, \(x) {
     #     return(var(x$CD))
@@ -71,15 +77,24 @@ p <- ggplot(outcomeInformation %>%
         samples <- dim(x)[1]
         case_when(
             sum(x$CD < metabCDThreshold) >= (samples - allowDifference) ~ "high",
-            sum(x$CD > metabCDThreshold) >= (samples - allowDifference) ~ "low",
+            sum(x$CD >= metabCDThreshold) >= (samples - allowDifference) ~ "low",
             .default = "mixed"
         )
-    }
-    )) %T>%
+    })) %>%
+    identity() %T>%
+    # mutate(`cdRatio` = map_dbl(data, \(x) {
+    #     if (dim(x)[1] != 1) {
+    #         dsaadsadsds
+    #     }
+    #     return(as.numeric(x$CD))
+    # }
+    # )) %T>%
     write_tsv(here("results/CD_metabolism_map.tsv")) %>%
     unnest() %>%
     identity()
-, aes(x = visitNumber, y = CD)) +
+
+p <- ggplot(data = data
+    , aes(x = visit, y = CD)) +
     geom_hline(yintercept = 1, linetype = 'dotted') +
     geom_boxplot(outlier.color = NA) +
     {
@@ -107,8 +122,8 @@ p <- ggplot(outcomeInformation %>%
     NULL
 
 ggsave(plot = p, filename = str_c(here("plots/KLGPG_221206/CDOverTime_allowDifference_"), allowDifference, ".pdf"), width = 5, height = 5.5)
+ggsave(plot = p + scale_x_discrete_prisma(drop = TRUE), filename = str_c(here("plots/KLGPG_221206/CDOverTime_allowDifference_"), allowDifference, "_dropped.pdf"), width = 3, height = 5.5)
 # ggsave(plot = p, filename = here("plots/KLGPG_221206/CDOverTime.png"), width = 5, height = 5.5)
-
 
 (clinicalMetadata %>%
     select(patientID, cyp3a5star3, cyp3a4star22) %>%
@@ -145,11 +160,9 @@ ggsave(plot = p, filename = str_c(here("plots/KLGPG_221206/CDOverTime_allowDiffe
     ylab("Number of patients")) %>%
     ggsave(filename = here("plots/KLGPG_221206/cyp_genotype_CD_metabolism.pdf"))
 
-
 ###############################################################################
 ## Fit univariate log. regression models (adjusted and unaadjusted) to get an idea of the association of the microbiome with CD
 ###############################################################################
-
 
 cdModelDataSmall <- read_tsv(here("results/CD_metabolism_map.tsv")) %>%
     select(-data) %>%
@@ -285,7 +298,8 @@ scatter_plot <- ggplot(scatter_data) +
     ylim(c(0, 2)) +
     NULL
 
-ggsave(pAdjusted + pUnadjusted + scatter_plot + plot_layout(guides = 'collect'), filename = here("plots/KLGPG_221206/glm_cd_cyp_tax_profiles_volcano_plots.pdf"), width = 12, height = 5)
+# ggsave(pAdjusted + pUnadjusted + scatter_plot + plot_layout(guides = 'collect'), filename = here("plots/KLGPG_221206/glm_cd_cyp_tax_profiles_volcano_plots.pdf"), width = 12, height = 5)
+ggsave(pUnadjusted + scatter_plot + plot_layout(guides = 'collect'), filename = here("plots/KLGPG_221206/glm_cd_cyp_tax_profiles_volcano_plots.pdf"), width = 12, height = 5)
 
 (resTibble %>%
     arrange(taxon_pvalue) %>%
@@ -298,13 +312,20 @@ ggsave(pAdjusted + pUnadjusted + scatter_plot + plot_layout(guides = 'collect'),
     ggsave(filename = here("plots/KLGPG_221206/glm_cd_cyp_tax_profiles.pdf"), width = 12, height = 3.5)
 
 plots <- list()
-for (g in c("Kopriimonas", "Erysipelatoclostridium", "Enterococcus", "Roseburia", "Coprococcus", "Coprococcus_A", "Parasutterella", 'Sutterella', "Ruminococcus_C")) {
-    # ggsave(filename = str_c(here("plots/KLGPG_221206/"), g, ".pdf"), width = 5, height = 4)
-    plots[[length(plots) + 1]] <- illustrate_taxon_hit(do.call('rbind', modelDataAll), g) + ggtitle(g) + theme(plot.title = element_text(size = 8, face = "bold"))
+for (g in candidate_genera) {
+    plots[[length(plots) + 1]] <- illustrate_taxon_hit(do.call('rbind', modelDataAll), g, meta, by_batch = FALSE) + ggtitle(g) + theme(plot.title = element_text(size = 8, face = "bold"))
 }
 
-ggsave(plot = wrap_plots(plots, guides = 'collect', nrow = 2),
-    filename = here("plots/KLGPG_221206/cd_metabolism_hits.pdf"), width = 9, height = 5)
+ggsave(plot = wrap_plots(plots, guides = 'collect', nrow = 3),
+    filename = here("plots/KLGPG_221206/cd_metabolism_hits.pdf"), width = 7, height = 7)
+
+plots <- list()
+for (g in candidate_genera) {
+    plots[[length(plots) + 1]] <- illustrate_taxon_hit(do.call('rbind', modelDataAll), g, meta, by_batch = TRUE) + ggtitle(g) + theme(plot.title = element_text(size = 8, face = "bold"))
+}
+
+ggsave(plot = wrap_plots(plots, guides = 'collect', nrow = 3),
+    filename = here("plots/KLGPG_221206/cd_metabolism_hits_by_batch.pdf"), width = 12, height = 7)
 
 ###############################################################################
 ##  train RF models to predict CD bracket based on clinical meta + microbiome
@@ -345,24 +366,34 @@ get_model_performances <- function(
             model_feature_string_non_microbial <- model_feature_string_original[!model_feature_string_original %in% candidateGenera]
             test <- model_data[model_data$patientID == patientID, ]
             train <- model_data[model_data$patientID != patientID, ]
-            if (microbial_feature_selection_internal) {
+            if (!is_logical(microbial_feature_selection_internal) || microbial_feature_selection_internal) {
                 all_microbial_features <- candidateGenera
                 train_only_microbial <- train[, colnames(train) %in% all_microbial_features]
                 train_rest <- train[, !colnames(train) %in% all_microbial_features]
-                wilcox_test_results <- get_wilcox_results_for_internal_filtering(
-                    train_only_microbial,
-                    train$cdMetabolism)
-                top_microbial_features <- enframe(wilcox_test_results) %>%
-                    rename(genus = name) %>%
-                    mutate(p_val = map_dbl(value, \(x) x$p.value)) %>%
-                    arrange(p_val) %>%
-                    head(top_microbial_features_if_microbial_feature_selection_internal) %>%
-                    select(genus)
+                if (is.logical(microbial_feature_selection_internal)) {
+                    print("Running training-set internal feature slection")
+                    wilcox_test_results <- get_wilcox_results_for_internal_filtering(
+                        train_only_microbial,
+                        train$cdMetabolism)
+                    top_microbial_features <- enframe(wilcox_test_results) %>%
+                        rename(genus = name) %>%
+                        mutate(p_val = map_dbl(value, \(x) x$p.value)) %>%
+                        arrange(p_val) %>%
+                        head(top_microbial_features_if_microbial_feature_selection_internal) %>%
+                        select(genus)
+                } else {
+                    print("Taking predifined top features")
+                    top_microbial_features <- data.frame(genus = microbial_feature_selection_internal)
+                }
                 # Caution: For testing only, since overfitting
                 # top_microbial_features <- data.frame(genus = c("Coprococcus"))
+                if (!all(top_microbial_features$genus %in% colnames(train_only_microbial))) {
+                    stop("Not all top microbial features you supplied are in the training data.")
+                }
                 train <- cbind(train_rest, train_only_microbial[, colnames(train_only_microbial) %in% top_microbial_features$genus])
                 model_feature_string <- c(model_feature_string_non_microbial, model_feature_string_original[model_feature_string_original %in% top_microbial_features$genus])
             }
+
             input_formula <- as.formula(str_c("cdMetabolism ~ ", str_c(model_feature_string, collapse = " + ")))
             print(input_formula)
             if (model_type == "RF") {
@@ -397,9 +428,12 @@ cdModelDataSmall$weight[is.na(cdModelDataSmall$weight)] <- mean(cdModelDataSmall
 
 rocObjectModelSmallAll <- get_model_performances(
     model_data = cdModelDataSmall,
-    model_feature_string = c("cyp3a5star3", "cyp3a4star22", "firstAlbuminMeasurement", "ageCategorical", "firstHematocritMeasurement", "sex", "weight"),
+    # model_feature_string = c("cyp3a5star3", "cyp3a4star22", "firstAlbuminMeasurement", "ageCategorical", "firstHematocritMeasurement", "sex", "weight"),
+    model_feature_string = c("cyp3a5star3", "cyp3a4star22"),
     resamp_n_model = resamp_n_model,
-    microbial_feature_selection_internal = FALSE)
+    microbial_feature_selection_internal = FALSE,
+    # model_type = "logreg")
+    model_type = model_type)
 
 cdModelDataBig <- cdModelDataSmall %>%
     inner_join(preTransplantProfiles %>%
@@ -412,7 +446,11 @@ rocObjectModelBigAll <- get_model_performances(
     model_data = cdModelDataBig,
     model_feature_string = c("cyp3a5star3", "cyp3a4star22", "firstAlbuminMeasurement", "ageCategorical", "firstHematocritMeasurement", "sex", "weight", candidateGenera),
     resamp_n_model = resamp_n_model,
-    microbial_feature_selection_internal = FALSE)
+    microbial_feature_selection_internal = candidate_genera,
+    # microbial_feature_selection_internal = TRUE,
+    # microbial_feature_selection_internal = FALSE,
+    # model_type = "logreg")
+    model_type = model_type)
 
 cdModelDataOnlyTax <- cdModelDataSmall %>%
     inner_join(preTransplantProfiles %>%
@@ -425,7 +463,11 @@ rocObjectModelOnlyTaxAll <- get_model_performances(
     model_data = cdModelDataOnlyTax,
     model_feature_string = candidateGenera,
     resamp_n_model = resamp_n_model,
-    microbial_feature_selection_internal = FALSE)
+    microbial_feature_selection_internal = candidate_genera,
+    # microbial_feature_selection_internal = TRUE,
+    # microbial_feature_selection_internal = FALSE,
+    # model_type = "logreg")
+    model_type = model_type)
 
 cdModels <- tibble(
     resamp = 1:resamp_n_model,
@@ -440,11 +482,11 @@ cdModels <- tibble(
     })) %>%
     mutate(auc = map_dbl(roc, \(x) x$auc)) %>%
     mutate(group = case_when(
-        model_type == "small_roc" ~ "Clinical model",
-        model_type == "big_roc" ~ "CM + microbiome",
+        model_type == "small_roc" ~ "cyp genotype",
+        model_type == "big_roc" ~ "cyp + microbiome",
         model_type == "onlytax_roc" ~ "microbiome"
     )) %>%
-    mutate(group = factor(group, levels = rev(c('Clinical model', "microbiome", "CM + microbiome")), ordered = TRUE)) %>%
+    mutate(group = factor(group, levels = rev(c('cyp genotype', "microbiome", "cyp + microbiome")), ordered = TRUE)) %>%
     arrange(group) %>%
     rename(Features = group) %>%
     group_by(Features) %>%
@@ -469,39 +511,39 @@ pClinical <- ggplot() +
     geom_line(data = cdModels %>%
         select(resamp, Features, specs) %>%
         unnest() %>%
-        filter(Features == 'Clinical model'), aes(x = FPR, y = TPR, group = interaction(Features, resamp), color = Features), alpha = 0.5) +
+        filter(Features == 'cyp genotype'), aes(x = FPR, y = TPR, group = interaction(Features, resamp), color = Features), alpha = 0.5) +
     theme_presentation() +
     scale_color_manual(values = colors) +
     xlab("False Positive Rate") +
     ylab("True Positive Rate") +
     geom_text(data = cdModels %>%
-        filter(Features == 'Clinical model') %>%
+        filter(Features == 'cyp genotype') %>%
         group_by(Features) %>%
         summarize(label = round(median(auc), 3), y = y[1]), aes(x = 0.275, y = y, label = str_c(Features, ": ", label)), inherit.aes = FALSE, hjust = 0) +
     NULL
 
 ggsave(
     plot = pClinical,
-    filename = here("plots/KLGPG_221206/cdMetabolismPredictionOnlyClinical.pdf"), width = 5, height = 3.25)
+    filename = here(str_c("plots/KLGPG_221206/cdMetabolismPredictionOnlyClinical", model_type, ".pdf")), width = 5, height = 3.25)
 
 pC <- ggplot() +
     geom_line(data = cdModels %>%
         select(resamp, Features, specs) %>%
         unnest() %>%
-        filter(Features == 'CM + microbiome'), aes(x = FPR, y = TPR, group = interaction(Features, resamp), color = Features), alpha = 0.5) +
+        filter(Features == 'cyp + microbiome'), aes(x = FPR, y = TPR, group = interaction(Features, resamp), color = Features), alpha = 0.5) +
     theme_presentation() +
     scale_color_manual(values = colors) +
     xlab("False Positive Rate") +
     ylab("True Positive Rate") +
     geom_text(data = cdModels %>%
-        filter(Features == 'CM + microbiome') %>%
+        filter(Features == 'cyp + microbiome') %>%
         group_by(Features) %>%
         summarize(label = round(median(auc), 3), y = y[1]), aes(x = 0.275, y = y, label = str_c(Features, ": ", label)), inherit.aes = FALSE, hjust = 0) +
     NULL
 
 ggsave(
     plot = pC,
-    filename = here("plots/KLGPG_221206/cdMetabolismPredictionClinicalPlusMicrobiome.pdf"), width = 5, height = 3.25)
+    filename = here(str_c("plots/KLGPG_221206/cdMetabolismPredictionClinicalPlusMicrobiome", model_type, ".pdf")), width = 5, height = 3.25)
 
 pC <- ggplot() +
     geom_line(data = cdModels %>%
@@ -520,7 +562,7 @@ pC <- ggplot() +
 
 ggsave(
     plot = pC,
-    filename = here("plots/KLGPG_221206/cdMetabolismPredictionClinicalOnlyMicrobiome.pdf"), width = 5, height = 3.25)
+    filename = here(str_c("plots/KLGPG_221206/cdMetabolismPredictionClinicalOnlyMicrobiome", model_type, ".pdf")), width = 5, height = 3.25)
 
 pAll <- ggplot() +
     geom_line(data = cdModels %>%
@@ -537,4 +579,4 @@ pAll <- ggplot() +
 
 ggsave(
     plot = pAll,
-    filename = here("plots/KLGPG_221206/cdMetabolismPrediction.pdf"), width = 5, height = 3.25)
+    filename = here(str_c("plots/KLGPG_221206/cdMetabolismPrediction", model_type, ".pdf")), width = 5, height = 3.25)
