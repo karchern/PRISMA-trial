@@ -45,6 +45,7 @@ preTransplantProfiles <- profiles %>%
 
 # candidateGenera <- c("Enterococcus", "Roseburia", "Coprococcus")
 candidateGenera <- unique(preTransplantProfiles$genus)
+clinical_covars <- c("cyp3a5star3", "firstAlbuminMeasurement", "ageCategorical", "firstHematocritMeasurement", "sex", "weight")
 
 ##############################################################################
 #### Primary endpoint prediction: Predict CD at baseline from microbiome ####
@@ -364,7 +365,7 @@ vals_cyp3a4star22 <- compute_tpr_fpr_from_variable_and_ground_truths(
 
 rocObjectModelSmallAll <- get_model_performances(
     model_data = cdModelDataSmall,
-    model_feature_string = c("cyp3a5star3", "firstAlbuminMeasurement", "ageCategorical", "firstHematocritMeasurement", "sex", "weight"),
+    model_feature_string = clinical_covars,
     # model_feature_string = c("cyp3a5star3", "cyp3a4star22"),
     resamp_n_model = resamp_n_model,
     microbial_feature_selection_internal = FALSE,
@@ -390,7 +391,7 @@ rocObjectModelBig <- get_model_performances(
 
 rocObjectModelBigAll <- get_model_performances(
     model_data = cdModelDataBig,
-    model_feature_string = c("cyp3a5star3", "cyp3a4star22", "firstAlbuminMeasurement", "ageCategorical", "firstHematocritMeasurement", "sex", "weight", candidateGenera),
+    model_feature_string = c(clinical_covars, candidateGenera),
     resamp_n_model = resamp_n_model,
     microbial_feature_selection_internal = candidate_genera_for_prediction,
     # microbial_feature_selection_internal = TRUE,
