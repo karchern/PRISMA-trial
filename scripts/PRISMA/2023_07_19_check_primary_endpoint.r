@@ -421,9 +421,6 @@ get_model_performances <- function(
     return(rocObjectsAll)
 }
 
-# ATTENTION: I have to artificially include some noise cause otherwise the logistic model won't fit...
-# cdModelDataSmall$cyp3a5star3[c(1)] <- TRUE
-# ATTENTION: I impute albumin/hematocrit/weight with the mean
 cdModelDataSmall$firstAlbuminMeasurement[is.na(cdModelDataSmall$firstAlbuminMeasurement)] <- mean(cdModelDataSmall$firstAlbuminMeasurement[!is.na(cdModelDataSmall$firstAlbuminMeasurement)])
 cdModelDataSmall$weight[is.na(cdModelDataSmall$weight)] <- mean(cdModelDataSmall$weight[!is.na(cdModelDataSmall$weight)])
 
@@ -445,18 +442,6 @@ cdModelDataSmall$weight[is.na(cdModelDataSmall$weight)] <- mean(cdModelDataSmall
 #     # model_type = "logreg")
 #     model_type = model_type)
 
-compute_tpr_fpr_from_variable_and_ground_truths <- function(ground_truths_boolean, predictions_boolean) {
-    stopifnot(is.logical(ground_truths_boolean) && is.logical(predictions_boolean) && length(ground_truths_boolean) == length(predictions_boolean))
-    # Create a confusion matrix
-    cm <- table(Predicted = factor(predictions_boolean, levels = c("FALSE", "TRUE")), Actual = factor(ground_truths_boolean, levels = c("FALSE", "TRUE")))
-    # Compute TPR and FPR
-    TPR <- cm["TRUE", "TRUE"] / (cm["TRUE", "TRUE"] + cm["FALSE", "TRUE"])
-    FPR <- cm["TRUE", "FALSE"] / (cm["TRUE", "FALSE"] + cm["FALSE", "FALSE"])
-
-    # Return a list with TPR and FPR
-    return(list(TPR = TPR, FPR = FPR))
-}
-
 vals_cyp3a5star3 <- compute_tpr_fpr_from_variable_and_ground_truths(
     ground_truths_boolean = cdModelDataSmall$cdMetabolism == 'high',
     predictions_boolean = cdModelDataSmall$cyp3a5star3
@@ -465,11 +450,6 @@ vals_cyp3a4star22 <- compute_tpr_fpr_from_variable_and_ground_truths(
     ground_truths_boolean = cdModelDataSmall$cdMetabolism == 'high',
     predictions_boolean = cdModelDataSmall$cyp3a4star22
 )
-
-# # Example usage:
-# rates <- compute_rates(ground_truths, predictions)
-# print("TPR and FPR values of 1-NN classifier from phylogenetic distances:")
-# print(rates)
 
 rocObjectModelSmallAll <- get_model_performances(
     model_data = cdModelDataSmall,
@@ -527,7 +507,7 @@ rocObjectModelOnlyTaxAll <- get_model_performances(
 cdModels <- tibble(
     resamp = 1:resamp_n_model,
     # small_roc = map(rocObjectModelSmall, \(x) x[[1]]),
-    #big_roc = map(rocObjectModelBig, \(x) x[[1]]),
+    # big_roc = map(rocObjectModelBig, \(x) x[[1]]),
     big_all_roc = map(rocObjectModelBigAll, \(x) x[[1]]),
     small_all_roc = map(rocObjectModelSmallAll, \(x) x[[1]]),
     onlytax_roc = map(rocObjectModelOnlyTaxAll, \(x) x[[1]])
@@ -541,7 +521,7 @@ cdModels <- tibble(
     mutate(group = case_when(
         # model_type == "small_roc" ~ "cyp genotype",
         model_type == "small_all_roc" ~ "clinical model",
-        #model_type == "big_roc" ~ "cyp + microbiome",
+        # model_type == "big_roc" ~ "cyp + microbiome",
         model_type == "big_all_roc" ~ "CM + microbiome",
         model_type == "onlytax_roc" ~ "microbiome"
     )) %>%
@@ -644,16 +624,16 @@ pAll <- ggplot() +
     ylab("True Positive Rate") +
     geom_point(data = rbind(
         data.frame(
-        FPR = vals_cyp3a5star3$FPR, 
-        TPR = vals_cyp3a5star3$TPR,
-        Features = "cyp3a5star3"
+            FPR = vals_cyp3a5star3$FPR,
+            TPR = vals_cyp3a5star3$TPR,
+            Features = "cyp3a5star3"
         ),
         data.frame(
-        FPR = vals_cyp3a4star22$FPR, 
-        TPR = vals_cyp3a4star22$TPR,
-        Features = "cyp3a4star22"
-        )), aes(x = FPR, y = TPR, color = Features), size = 4, shape = 4) +
-    #geom_point(data = data.frame(FPR = vals_cyp3a4star22$FPR, TPR = vals_cyp3a4star22$TPR), aes(x = FPR, y = TPR), color = colors[5], size = 4, shape = 4) +
+            FPR = vals_cyp3a4star22$FPR,
+            TPR = vals_cyp3a4star22$TPR,
+            Features = "cyp3a4star22"
+    )), aes(x = FPR, y = TPR, color = Features), size = 4, shape = 4) +
+    # geom_point(data = data.frame(FPR = vals_cyp3a4star22$FPR, TPR = vals_cyp3a4star22$TPR), aes(x = FPR, y = TPR), color = colors[5], size = 4, shape = 4) +
     geom_text(data = cdModels %>%
         group_by(Features) %>%
         summarize(label = round(median(auc), 3), y = y[1]), aes(x = 0.275, y = y, label = str_c(Features, ": ", label)), inherit.aes = FALSE, hjust = 0) +
