@@ -517,3 +517,15 @@ diagnose_time_shift <- function(df, PSN = NULL) {
         scale_fill_manual(values = c("TRUE" = "darkgreen", "FALSE" = "darkblue")) +
         NULL)
 }
+
+compute_tpr_fpr_from_variable_and_ground_truths <- function(ground_truths_boolean, predictions_boolean) {
+    stopifnot(is.logical(ground_truths_boolean) && is.logical(predictions_boolean) && length(ground_truths_boolean) == length(predictions_boolean))
+    # Create a confusion matrix
+    cm <- table(Predicted = factor(predictions_boolean, levels = c("FALSE", "TRUE")), Actual = factor(ground_truths_boolean, levels = c("FALSE", "TRUE")))
+    # Compute TPR and FPR
+    TPR <- cm["TRUE", "TRUE"] / (cm["TRUE", "TRUE"] + cm["FALSE", "TRUE"])
+    FPR <- cm["TRUE", "FALSE"] / (cm["TRUE", "FALSE"] + cm["FALSE", "FALSE"])
+
+    # Return a list with TPR and FPR
+    return(list(TPR = TPR, FPR = FPR))
+}
