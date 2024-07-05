@@ -293,7 +293,8 @@ outcomeInformation <- rbind(outcomeInformation, outcomeInformationInterim)
 clinMetCode <- read_tsv('/g/scb/zeller/karcher/PRISMA/data/16S_metadata/231024_PRISMA_clinical_metadata_codebook.tsv')
 
 # this is the tibble containing
-model_covariates <- read_excel('/g/scb/zeller/karcher/PRISMA/data/16S_metadata/covariable_columns.xlsx') %>%
+# model_covariates <- read_excel('/g/scb/zeller/karcher/PRISMA/data/16S_metadata/covariable_columns.xlsx') %>%
+model_covariates <- read_excel('/g/scb/zeller/karcher/PRISMA/data/16S_metadata/covariable_columns_v2.xlsx') %>%
     # ATTENTION: This will have to change at a later stage
     filter(C_D_Ratio_Relevance_prio)
 tmp <- model_covariates$Column_newName
@@ -377,7 +378,11 @@ abxInfo <- abxInfo %>%
 abxInfo <- abxInfo
 # mutate(subclass = ifelse(subclass %in% (abxInfo %>% group_by(subclass) %>% tally() %>% filter(n>=3) %>% pull(subclass)), subclass, "miscellaneous"))
 abxInfo$X1 <- NULL
-outcomeInformation <- outcomeInformation[, !str_detect(colnames(outcomeInformation), "v[0-9]+_")]
+
+##########################################################
+############## This keeps coming to bite you in the ass...
+##########################################################
+outcomeInformation <- outcomeInformation[, !str_detect(colnames(outcomeInformation), "v[0-9]+_") | colnames(outcomeInformation) %in% names(model_covariates)]
 
 # Merge dose columns to have only one meaningful one and then calc CD ratio
 outcomeInformation <- outcomeInformation %>%
@@ -441,7 +446,7 @@ outcomeInformation$ABxSubClass <- apply(
     }
 )
 
-if (TRUE) {
+if (FALSE) {
 
     compare_CD_with_CD_corrected(
         outcomeInformation,
