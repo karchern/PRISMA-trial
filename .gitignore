@@ -10,3 +10,5 @@ data/ar53_taxonomy_r207.tsv
 data/bac120_taxonomy_r207.tsv
 data/gtdbk_tax_r207.tab
 plots/KLGPG_221206/single_ind_pcoa_plots/*
+data/gtdb_idtaxa.tax
+data/ncbi_mapseq.tax
