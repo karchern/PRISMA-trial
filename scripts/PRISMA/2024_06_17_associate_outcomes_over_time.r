@@ -12,8 +12,15 @@ library(ggquantileplot)
 # source('/home/karcher/utils/utils.r')
 source(here('scripts/utils.r'))
 
-# Load data
-obj_path <- here('objects/PRISMA_idtaxa.rdata')
+
+# taxonomy_annot <- "ncbi_mapseq"
+taxonomy_annot <- "gtdb_idtaxa"
+
+if (!taxonomy_annot %in% c("ncbi_mapseq", "gtdb_idtaxa")) {
+    stop("Unknown taxonomy annotation")
+}
+
+obj_path <- here(str_c('objects/PRISMA_', taxonomy_annot, '.rdata'))
 load_data(obj_path)
 
 ########################################################################################
