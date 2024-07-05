@@ -20,11 +20,20 @@ resamp_n_model <- 5
 # model_type <- "RF"
 model_type <- "logreg"
 
-candidate_genera_for_prediction <- c("Tyzzerella", "Anaerosporobacter", "Coprococcus", "Roseburia", "Dorea", "Faecalibacterium", "Leuconostoc")
+# candidate_genera_for_prediction <- c("Tyzzerella", "Anaerosporobacter", "Coprococcus", "Roseburia", "Dorea", "Faecalibacterium", "Leuconostoc")
+candidate_genera_for_prediction <- c("Tyzzerella", "Anaerosporobacter", "Coprococcus", "Roseburia", "Dorea", "Faecalibacterium")
 
 # Load data
-# obj_path <- here('objects/PRISMA_idtaxa.rdata')
-obj_path <- here('objects/PRISMA.rdata')
+
+taxonomy_annot <- "ncbi_mapseq"
+# taxonomy_annot <- "gtdb_idtaxa"
+
+if (!taxonomy_annot %in% c("ncbi_mapseq", "gtdb_idtaxa")) {
+    stop("Unknown taxonomy annotation")
+}
+
+obj_path <- here(str_c('objects/PRISMA_', taxonomy_annot, '.rdata'))
+
 load_data(obj_path)
 
 preTransplantProfiles <- profiles %>%
@@ -301,7 +310,7 @@ scatter_plot <- ggplot(scatter_data) +
     NULL
 
 # ggsave(pAdjusted + pUnadjusted + scatter_plot + plot_layout(guides = 'collect'), filename = here("plots/KLGPG_221206/glm_cd_cyp_tax_profiles_volcano_plots.pdf"), width = 12, height = 5)
-ggsave(pUnadjusted + scatter_plot + plot_layout(guides = 'collect'), filename = here("plots/KLGPG_221206/glm_cd_cyp_tax_profiles_volcano_plots.pdf"), width = 8, height = 4.5)
+ggsave(pUnadjusted + scatter_plot + plot_layout(guides = 'collect'), filename = here("plots/KLGPG_221206/glm_cd_cyp_tax_profiles_volcano_plots.pdf"), width = 12, height = 12)
 
 (resTibble %>%
     arrange(taxon_pvalue) %>%

@@ -13,12 +13,20 @@ library(randomForest)
 library(pROC)
 library(ggrepel)
 
+
+
+##########################################
+##########################################
+# Disclaimer: This code has not been tested since the big reshuffling. Should you want to revive this, you need to do so carefully
+##########################################
+##########################################
+
 # source('/home/karcher/utils/utils.r')
 source(here('scripts/utils.r'))
 
 
-# taxonomy_annot <- "ncbi_mapseq"
-taxonomy_annot <- "gtdb_idtaxa"
+taxonomy_annot <- "ncbi_mapseq"
+# taxonomy_annot <- "gtdb_idtaxa"
 
 if (!taxonomy_annot %in% c("ncbi_mapseq", "gtdb_idtaxa")) {
     stop("Unknown taxonomy annotation")
@@ -28,11 +36,6 @@ obj_path <- here(str_c('objects/PRISMA_', taxonomy_annot, '.rdata'))
 load_data(obj_path)
 
 
-##########################################
-##########################################
-# Disclaimer: This code has not been tested since the big reshuffling. Should you want to revive this, you need to do so carefully
-##########################################
-##########################################
 
 library(pROC)
 

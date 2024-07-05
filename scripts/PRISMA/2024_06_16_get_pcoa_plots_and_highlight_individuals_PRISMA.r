@@ -12,8 +12,8 @@ library(ggembl)
 source(here('scripts/utils.r'))
 
 
-# taxonomy_annot <- "ncbi_mapseq"
-taxonomy_annot <- "gtdb_idtaxa"
+taxonomy_annot <- "ncbi_mapseq"
+# taxonomy_annot <- "gtdb_idtaxa"
 
 if (!taxonomy_annot %in% c("ncbi_mapseq", "gtdb_idtaxa")) {
     stop("Unknown taxonomy annotation")
