@@ -620,3 +620,102 @@ get_model_performances <- function(
     }
     return(rocObjectsAll)
 }
+
+compare_CD_with_CD_corrected <- function(
+    outcomeInformation = NULL,
+    bsa_methods = c(
+        "bsa_haycock",
+        "bsa_duboisdubois",
+        "bsa_mosteller"
+    ),
+    CD_corrected_for_body_surface_area_midpoint = NULL,
+    CD_midpoint = NULL) {
+
+    if (is.numeric(CD_corrected_for_body_surface_area_midpoint)) {
+
+    } else if (is.character((CD_corrected_for_body_surface_area_midpoint)) && CD_corrected_for_body_surface_area_midpoint == 'median') {
+        CD_corrected_for_body_surface_area_midpoint <- median(outcomeInformation$CD_corrected, na.rm = TRUE)
+    } else {
+        stop('CD_corrected_for_body_surface_area_midpoint should be either numeric or character equalling median')
+    }
+
+    if (is.numeric(CD_midpoint)) {
+
+    } else if (is.character((CD_midpoint)) && CD_midpoint == 'median') {
+        CD_midpoint <- median(outcomeInformation$CD, na.rm = TRUE)
+    } else {
+        stop('CD_corrected_for_body_surface_area_midpoint should be either numeric or character equalling median')
+    }
+
+    for (bsa_method in bsa_methods) {
+        outcomeInformation <- outcomeInformation %>%
+            filter(!is.na(CD)) %>% # pre-transplant samples
+            mutate(CD_corrected = tac_concentration / (fin_tac_dose / .data[[bsa_method]]))
+        p1 <- outcomeInformation %>%
+            filter(!is.na(CD)) %>% # pre-transplant samples
+            select(CD, CD_corrected, age, ageCategorical) %>%
+            ggplot(aes(x = CD, y = CD_corrected, color = ageCategorical)) +
+            geom_abline(intercept = 0, slope = 1, linetype = 'dashed') +
+            geom_point(alpha = 0.5) +
+            theme_presentation()
+
+        p2 <- outcomeInformation %>%
+            filter(!is.na(CD)) %>% # pre-transplant samples
+            select(CD, CD_corrected, age, ageCategorical) %>%
+            ggplot(aes(x = CD, y = CD_corrected, color = age)) +
+            geom_abline(intercept = 0, slope = 1, linetype = 'dashed') +
+            geom_point(alpha = 0.3) +
+            theme_presentation() +
+            scale_color_gradient(low = '#6ccbe1', high = 'red')
+
+        p3 <- outcomeInformation %>%
+            mutate(CD = ifelse(CD > 4, 4, CD)) %>%
+            mutate(CD_corrected = ifelse(CD_corrected > 4, 4, CD_corrected)) %>%
+            filter(!is.na(CD)) %>% # pre-transplant samples
+            select(patientID, visitNumber, CD, CD_corrected) %>%
+            pivot_longer(-c(patientID, visitNumber)) %>%
+            mutate(group = str_c(patientID, visitNumber)) %>%
+            ggplot(aes(x = name, y = value)) +
+            geom_boxplot() +
+            theme_presentation() +
+            xlab("CD type") +
+            ylab('value') +
+            geom_point(data = data.frame(x = "CD", y = CD_midpoint), aes(x = x, y = y), color = 'red', size = 3, inherit.aes = FALSE) +
+            geom_point(data = data.frame(x = "CD_corrected", y = CD_corrected_for_body_surface_area_midpoint), aes(x = x, y = y), color = 'red', size = 3, inherit.aes = FALSE)
+
+
+        p4_data <- outcomeInformation %>%
+            filter(!is.na(CD)) %>%
+            mutate(CD = ifelse(CD > 4, 4, CD)) %>%
+            mutate(CD_corrected = ifelse(CD_corrected > 4, 4, CD_corrected)) %>%
+            mutate(CD_bin = ifelse(CD > CD_midpoint, 'high', 'low')) %>%
+            mutate(CD_corrected_bin = ifelse(CD_corrected > CD_corrected_for_body_surface_area_midpoint, 'high', 'low')) %>%
+            select(patientID, visitNumber, CD_bin, CD_corrected_bin) %>%
+            # pivot_longer(-c(patientID, visitNumber)) %>%
+            # group_by(name, value) %>% tally() %>%
+            # rename(CD_type = name, bracket = value) %>%
+            # select(CD_type, bracket) %>%
+            select(CD_bin, CD_corrected_bin) %>%
+            table() %>%
+            as.data.frame() %>%
+            rename(count = Freq)
+        p4 <- ggplot(data = p4_data, aes(x = CD_bin, y = CD_corrected_bin)) +
+            # geom_bar(stat = 'identity') +
+            geom_tile(aes(fill = count)) +
+            geom_text(aes(label = count), color = '#888888', size = 5) +
+            theme_presentation() +
+            scale_fill_continuous(limits = c(0, 200), low = '#4c4c4c', high ='#f8f8f8')
+        # scale_fill_manual(values = c('low' = 'darkgrey', 'high' = 'lightgray')) +
+        NULL
+
+        ggsave(plot = (p1 | p2) / (p3 | p4) + plot_layout(guides = 'collect'), filename = here(str_c('plots/KLGPG_221206/CD_vs_CD_corrected_', bsa_method, '.pdf')), width = 6.5, height = 5)
+
+        rank_cor <- outcomeInformation %>%
+            filter(!is.na(CD)) %>%
+            select(CD, CD_corrected) %>%
+            cor(method = 'spearman') %>%
+            as.numeric()
+
+        print(rank_cor)
+    }
+}

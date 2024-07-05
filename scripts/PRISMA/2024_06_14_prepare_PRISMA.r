@@ -11,8 +11,8 @@ library(ggembl)
 # source('/home/karcher/utils/utils.r')
 source(here('scripts/utils.r'))
 
-# taxonomy_annot <- "ncbi_mapseq"
-taxonomy_annot <- "gtdb_idtaxa"
+taxonomy_annot <- "ncbi_mapseq"
+# taxonomy_annot <- "gtdb_idtaxa"
 
 if (!taxonomy_annot %in% c("ncbi_mapseq", "gtdb_idtaxa")) {
     stop("Unknown taxonomy annotation")
@@ -304,6 +304,7 @@ outcomeInformation <- outcomeInformation %>%
     rename(
         patientID = v65_pat_id,
         visitNumber = v62_visit_number,
+        height = v92_height, # height in cm
         # birthday = v13_dob,
         ##################################
         # clinical outcome related stuff
@@ -322,7 +323,7 @@ outcomeInformation <- outcomeInformation %>%
         tacDoseAdvagraf = v114b_Tacrolimus_Advagraf_dose,
         tacDoseModigraf = v404b_Tacrolimus_Modigraf_dose,
         ### concentrations
-        tacConcentration = v254_Tacrolimus,
+        tac_concentration = v254_Tacrolimus,
         ### study center
         studyCenter = study_center,
         # cyp3a5star3 = v4_CYP3A5_3,
@@ -376,11 +377,11 @@ abxInfo <- abxInfo %>%
 abxInfo <- abxInfo
 # mutate(subclass = ifelse(subclass %in% (abxInfo %>% group_by(subclass) %>% tally() %>% filter(n>=3) %>% pull(subclass)), subclass, "miscellaneous"))
 abxInfo$X1 <- NULL
-outcomeInformation <- outcomeInformation[, !str_detect(colnames(outcomeInformation), "_")]
+outcomeInformation <- outcomeInformation[, !str_detect(colnames(outcomeInformation), "v[0-9]+_")]
 
 # Merge dose columns to have only one meaningful one and then calc CD ratio
 outcomeInformation <- outcomeInformation %>%
-    mutate(finTacDose = pmap_dbl(list(tacDosePrograf, tacDoseEnvarsus, tacDoseAdvagraf, tacDoseModigraf), function(a, b, c, d) {
+    mutate(fin_tac_dose = pmap_dbl(list(tacDosePrograf, tacDoseEnvarsus, tacDoseAdvagraf, tacDoseModigraf), function(a, b, c, d) {
         tmp <- c(a, b, c, d)
         if (all(is.na(tmp))) {
             return(NA)
@@ -389,8 +390,13 @@ outcomeInformation <- outcomeInformation %>%
         return(tmp[!is.na(tmp)])
     })) %>%
     select(-all_of(colnames(.)[str_detect(colnames(.), 'tacDose')])) %>%
-    mutate(CD = tacConcentration / finTacDose)
-# mutate(CD = tacConcentration / (finTacDose / bodySurfaceArea))
+    mutate(CD = tac_concentration / fin_tac_dose) %>%
+    # height in cm, weight in kg, Haycock formula
+    # mutate(body_surface_area = 0.024265 * (height^0.3964) * weight^0.5378) %>%
+    mutate(bsa_haycock = 0.024265 * (height^0.3964) * weight^0.5378) %>%
+    mutate(bsa_duboisdubois = 0.20247 * (height / 100)^0.725 * weight^0.425) %>%
+    mutate(bsa_mosteller = sqrt((height * weight) / 3600)) %>%
+    mutate(CD_corrected = tac_concentration / (fin_tac_dose / bsa_haycock))
 stopifnot(all(abxInfo$allAbx == outcomeInformation %>% select(all_of(abxInfo$allAbx)) %>% colnames()))
 # Same for ABx
 ####################################
@@ -435,6 +441,26 @@ outcomeInformation$ABxSubClass <- apply(
     }
 )
 
+if (TRUE) {
+
+    compare_CD_with_CD_corrected(
+        outcomeInformation,
+        CD_corrected_for_body_surface_area_midpoint = 1,
+        CD_midpoint = 1)
+
+    compare_CD_with_CD_corrected(
+        outcomeInformation,
+        CD_corrected_for_body_surface_area_midpoint = 'median',
+        CD_midpoint = 1)
+
+
+    compare_CD_with_CD_corrected(
+        outcomeInformation,
+        CD_corrected_for_body_surface_area_midpoint = 'median',
+        CD_midpoint = 'median')
+
+}
+
 outcomeInformation <- outcomeInformation %>%
     # Finally, set 'others' and 'none' to NA
     mutate(ABxSubClass = ifelse(ABxSubClass %in% c("none"), NA, ABxSubClass))
@@ -448,7 +474,9 @@ outcomeInformation <- outcomeInformation %>%
 outcomeInformation <- outcomeInformation %>%
     mutate(across(c(hospitalization, rejection, changeImmunosuppRegimen), \(x) ifelse(is.na(x), FALSE, x)))
 
-outcomeInformation <- outcomeInformation %>% mutate(CDbinary = factor(ifelse(CD >= 1, "high", "low"), levels = c('low', 'high')))
+outcomeInformation <- outcomeInformation %>%
+    mutate(CDbinary = factor(ifelse(CD >= 1, "high", "low"), levels = c('low', 'high'))) %>%
+    mutate(CDbinary_corrected = factor(ifelse(CD_corrected >= 1, "high", "low"), levels = c('low', 'high')))
 
 ##################################
 ##################################
@@ -663,7 +691,10 @@ outcomeInformation <- outcomeInformation %>%
         rejection,
         changeImmunosuppRegimen,
         CD,
-        CDbinary) %>%
+        CD_corrected,
+        CDbinary,
+        CDbinary_corrected
+    ) %>%
     rename(visit = visitNumber) %>%
     group_by(patientID, visit) %>%
     nest() %>%
