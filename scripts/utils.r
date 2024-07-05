@@ -455,9 +455,9 @@ compareTaxAssocsScatter <- function(taxon = NULL, outcomeMeasure = "CD", lmmObje
     return(p)
 }
 
-illustrate_taxon_hit <- function(modelData = NULL, taxon = NULL, meta = NULL, by_batch = FALSE) {
+illustrate_taxon_hit <- function(modelData = NULL, taxon = NULL, meta = NULL, by_batch = FALSE, tax_level = "genus") {
     modelData <- modelData %>%
-        filter(genus == taxon) %>%
+        filter(.data[[tax_level]] == taxon) %>%
         rename(`Tacrolimus\nmetabolism` = cdMetabolism) %>%
         mutate(relAb = (10^(relAb) * 100)) %>%
         inner_join(
@@ -566,7 +566,7 @@ get_model_performances <- function(
             test <- model_data[model_data$patientID == patientID, ]
             train <- model_data[model_data$patientID != patientID, ]
             if (!is_logical(microbial_feature_selection_internal) || microbial_feature_selection_internal) {
-                all_microbial_features <- candidateGenera
+                all_microbial_features <- c(candidateGenera)
                 train_only_microbial <- train[, colnames(train) %in% all_microbial_features]
                 train_rest <- train[, !colnames(train) %in% all_microbial_features]
                 if (is.logical(microbial_feature_selection_internal)) {
@@ -587,6 +587,7 @@ get_model_performances <- function(
                 # Caution: For testing only, since overfitting
                 # top_microbial_features <- data.frame(genus = c("Coprococcus"))
                 if (!all(top_microbial_features$genus %in% colnames(train_only_microbial))) {
+                    print(top_microbial_features$genus[!top_microbial_features$genus %in% colnames(train_only_microbial)])
                     stop("Not all top microbial features you supplied are in the training data.")
                 }
                 train <- cbind(train_rest, train_only_microbial[, colnames(train_only_microbial) %in% top_microbial_features$genus])
