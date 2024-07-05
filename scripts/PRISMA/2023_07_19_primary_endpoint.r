@@ -20,8 +20,8 @@ resamp_n_model <- 5
 # model_type <- "RF"
 model_type <- "logreg"
 
-# taxonomy_annot <- "ncbi_mapseq"
-taxonomy_annot <- "gtdb_idtaxa"
+taxonomy_annot <- "ncbi_mapseq"
+# taxonomy_annot <- "gtdb_idtaxa"
 
 if (taxonomy_annot == "ncbi_mapseq") {
     ### For NCBI
@@ -31,7 +31,8 @@ if (taxonomy_annot == "ncbi_mapseq") {
         "Coprococcus",
         "Roseburia",
         "Dorea",
-        "Faecalibacterium"
+        "Faecalibacterium",
+        "Lachnospiraceae"
         # "Leuconostoc" # Super lowly abundant and heavily dependent on rarefaction seed...
     )
 } else if (taxonomy_annot == "gtdb_idtaxa") {
