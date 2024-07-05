@@ -473,14 +473,15 @@ illustrate_taxon_hit <- function(modelData = NULL, taxon = NULL, meta = NULL, by
         geom_jitter(
             data = modelData,
             aes(x = `Tacrolimus\nmetabolism`, y = relAb, fill = `Tacrolimus\nmetabolism`), position = position_jitter(), alpha = 0.3) +
-        theme_presentation() +
+        theme_publication() +
+        theme(plot.title = element_text(size = 14, face = "bold")) +
         ylab("Bacterial\nrelative abundance [%]") +
         # scale_fill_manual(values = c('low' = "#4a5dca", "high" = "#d43e3e")) +
         scale_fill_manual(values = cdMetabColors) +
         scale_y_continuous(trans = 'log10', limits = c(0.005, max(modelData$relAb) * 1.05)) +
         {
             if (by_batch) {
-                facet_wrap(~batch, scales = "free")
+                facet_grid(~batch)
             } else {
                 NULL
             }

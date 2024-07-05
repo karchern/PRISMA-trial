@@ -20,20 +20,44 @@ resamp_n_model <- 5
 # model_type <- "RF"
 model_type <- "logreg"
 
-# candidate_genera_for_prediction <- c("Tyzzerella", "Anaerosporobacter", "Coprococcus", "Roseburia", "Dorea", "Faecalibacterium", "Leuconostoc")
-candidate_genera_for_prediction <- c("Tyzzerella", "Anaerosporobacter", "Coprococcus", "Roseburia", "Dorea", "Faecalibacterium")
+# taxonomy_annot <- "ncbi_mapseq"
+taxonomy_annot <- "gtdb_idtaxa"
+
+if (taxonomy_annot == "ncbi_mapseq") {
+    ### For NCBI
+    candidate_taxa_for_prediction <- c(
+        "Tyzzerella",
+        "Anaerosporobacter",
+        "Coprococcus",
+        "Roseburia",
+        "Dorea",
+        "Faecalibacterium"
+        # "Leuconostoc" # Super lowly abundant and heavily dependent on rarefaction seed...
+    )
+} else if (taxonomy_annot == "gtdb_idtaxa") {
+    # For GTDB
+    candidate_taxa_for_prediction <- c(
+        "Dorea_A",
+        # "Coprobacter",
+        "Bariatricus",
+        "Roseburia",
+        "Dorea"
+    )
+}
+
+
+## NCBI_ENTRY <-> GTDB_ENTRY
+# Tyzzerella <-> Faecalimonas, Anaerotignum
+# Anaerosporobacter <-> Anaerosporobacter
+# Coprococcos <-> Coprococcus_A, Faecalimonas, Batriatricus
 
 # Load data
-
-taxonomy_annot <- "ncbi_mapseq"
-# taxonomy_annot <- "gtdb_idtaxa"
 
 if (!taxonomy_annot %in% c("ncbi_mapseq", "gtdb_idtaxa")) {
     stop("Unknown taxonomy annotation")
 }
 
 obj_path <- here(str_c('objects/PRISMA_', taxonomy_annot, '.rdata'))
-
 load_data(obj_path)
 
 preTransplantProfiles <- profiles %>%
@@ -52,8 +76,20 @@ preTransplantProfiles <- profiles %>%
     # filter(mean(relAb > 0.01) > 0.1) %>%
     inner_join(importantTaxaGenus %>% rename(genus = taxa))
 
-# candidateGenera <- c("Enterococcus", "Roseburia", "Coprococcus")
-candidateGenera <- unique(preTransplantProfiles$genus)
+preTransplantProfilesFamily <- profiles_family %>%
+    inner_join(data.frame(visit = c(1, 2))) %>%
+    group_by(PSN) %>%
+    nest() %>%
+    mutate(data = map(data, \(x) {
+        if (1 %in% x$visit) {
+            return(x %>% filter(visit == 1))
+        } else {
+            return(x %>% filter(visit == 2))
+        }
+    })) %>%
+    unnest()
+
+candidateGenera <- unique(c(unique(preTransplantProfiles$genus), unique((preTransplantProfilesFamily$family))))
 clinical_covars <- c("cyp3a5star3", "firstAlbuminMeasurement", "ageCategorical", "firstHematocritMeasurement", "sex", "weight")
 
 ##############################################################################
@@ -237,8 +273,8 @@ resTibble <- tibble(genus = names(res), models = res) %>%
     filter(!taxon_pvalue_na) %>%
     mutate(taxon_estimate = as.numeric(taxon_estimate)) %>%
     mutate(taxon_pvalue = as.numeric(taxon_pvalue)) %>%
-    left_join(profiles %>% ungroup() %>% select(genus, phylum) %>% distinct(), by = c('genus' = 'genus')) %>%
-    relocate(genus, phylum) %>%
+    left_join(profiles %>% ungroup() %>% select(genus, family, phylum) %>% distinct(), by = c('genus' = 'genus')) %>%
+    relocate(genus, family, phylum) %>%
     arrange(taxon_pvalue) %>%
     mutate(taxon_estimate = ifelse(taxon_estimate < -5, -5, taxon_estimate)) %>%
     mutate(taxon_estimate = ifelse(taxon_estimate > 5, 5, taxon_estimate))
@@ -260,8 +296,8 @@ resTibbleUnadjusted <- tibble(genus = names(resUnadjusted), models = resUnadjust
     filter(!taxon_pvalue_na) %>%
     mutate(taxon_estimate = as.numeric(taxon_estimate)) %>%
     mutate(taxon_pvalue = as.numeric(taxon_pvalue)) %>%
-    left_join(profiles %>% ungroup() %>% select(genus, phylum) %>% distinct(), by = c('genus' = 'genus')) %>%
-    relocate(genus, phylum) %>%
+    left_join(profiles %>% ungroup() %>% select(genus, family, phylum) %>% distinct(), by = c('genus' = 'genus')) %>%
+    relocate(genus, family, phylum) %>%
     arrange(taxon_pvalue) %>%
     mutate(taxon_estimate = ifelse(taxon_estimate < -5, -5, taxon_estimate)) %>%
     mutate(taxon_estimate = ifelse(taxon_estimate > 5, 5, taxon_estimate))
@@ -280,8 +316,14 @@ pUnadjusted <- ggplot(data = resTibbleUnadjusted) +
     geom_vline(xintercept = 0, linetype = 'dotted') +
     geom_point(aes(x = taxon_estimate, y = -log10(taxon_pvalue)), alpha = 0.5) +
     # geom_text_repel(data = resTibbleUnadjusted %>% filter(taxon_pvalue < 0.1), aes(x = taxon_estimate, y = -log10(taxon_pvalue), label = genus)) +
-    geom_text_repel(data = resTibbleUnadjusted %>% filter(genus %in% candidate_genera_for_prediction), aes(x = taxon_estimate, y = -log10(taxon_pvalue), label = genus)) +
+    geom_text_repel(data = resTibbleUnadjusted %>%
+        # filter(genus %in% candidate_taxa_for_prediction)
+        arrange(taxon_pvalue) %>%
+        head(10)
+    , aes(x = taxon_estimate, y = -log10(taxon_pvalue), label = genus), max.overlaps = Inf) +
     theme_presentation() +
+    xlab("Effect size [odds ratio]") +
+    ylab("-log10(p-value)") +
     ggtitle("UNADJUSTED log. regression model\n predicting CD metabolism\nfrom baseline information") +
     NULL
 
@@ -305,14 +347,14 @@ scatter_plot <- ggplot(scatter_data) +
             )
     , aes(x = -log10(taxon_pvalue_adjusted), y = -log10(taxon_pvalue_unadjusted), label = genus)) +
     theme_presentation() +
-    xlim((c(0, 2))) +
-    ylim(c(0, 2)) +
+    xlim((c(0, NA))) +
+    ylim(c(0, NA)) +
     NULL
 
 # ggsave(pAdjusted + pUnadjusted + scatter_plot + plot_layout(guides = 'collect'), filename = here("plots/KLGPG_221206/glm_cd_cyp_tax_profiles_volcano_plots.pdf"), width = 12, height = 5)
-ggsave(pUnadjusted + scatter_plot + plot_layout(guides = 'collect'), filename = here("plots/KLGPG_221206/glm_cd_cyp_tax_profiles_volcano_plots.pdf"), width = 12, height = 12)
+ggsave(pUnadjusted + scatter_plot + plot_layout(guides = 'collect'), filename = here("plots/KLGPG_221206/glm_cd_cyp_tax_profiles_volcano_plots.pdf"), width = 8, height = 4.5)
 
-(resTibble %>%
+(resTibbleUnadjusted %>%
     arrange(taxon_pvalue) %>%
     head(50) %>%
     mutate(genus = factor(genus, levels = genus)) %>%
@@ -320,23 +362,60 @@ ggsave(pUnadjusted + scatter_plot + plot_layout(guides = 'collect'), filename = 
     theme_presentation() +
     theme(axis.text.x = element_text(angle = 60, hjust = 1)) +
     geom_bar(stat = 'identity')) %>%
-    ggsave(filename = here("plots/KLGPG_221206/glm_cd_cyp_tax_profiles.pdf"), width = 12, height = 3.5)
+    ggsave(filename = here("plots/KLGPG_221206/glm_cd_cyp_tax_profiles_phylum.pdf"), width = 12, height = 3.5)
+
+
+top_fam <- resTibbleUnadjusted %>%
+    arrange(taxon_pvalue) %>%
+    head(50) %>%
+    group_by(family) %>%
+    tally() %>%
+    arrange(desc(n)) %>%
+    head(3) %>%
+    pull(family)
+resTibbleUnadjusted$top_family <- resTibbleUnadjusted$family
+resTibbleUnadjusted <- resTibbleUnadjusted %>%
+    mutate(top_family = ifelse(!top_family %in% top_fam, "Other", top_family)) %>%
+    mutate(top_family = factor(top_family, levels = c(top_fam, "Other")))
+(resTibbleUnadjusted %>%
+    arrange(taxon_pvalue) %>%
+    head(50) %>%
+    mutate(genus = factor(genus, levels = genus)) %>%
+    ggplot(aes(x = genus, y = taxon_pvalue, fill = top_family)) +
+    theme_presentation() +
+    theme(axis.text.x = element_text(angle = 60, hjust = 1)) +
+    geom_bar(stat = 'identity')) %>%
+    ggsave(filename = here("plots/KLGPG_221206/glm_cd_cyp_tax_profiles_family.pdf"), width = 12, height = 3.5)
 
 plots <- list()
-for (g in candidate_genera_for_prediction) {
+for (g in candidate_taxa_for_prediction) {
     plots[[length(plots) + 1]] <- illustrate_taxon_hit(do.call('rbind', modelDataAll), g, meta, by_batch = FALSE) + ggtitle(g) + theme(plot.title = element_text(size = 8, face = "bold"))
 }
-
-ggsave(plot = wrap_plots(plots, guides = 'collect', nrow = 3),
-    filename = here("plots/KLGPG_221206/cd_metabolism_hits.pdf"), width = 7, height = 7)
-
-plots <- list()
-for (g in candidate_genera_for_prediction) {
-    plots[[length(plots) + 1]] <- illustrate_taxon_hit(do.call('rbind', modelDataAll), g, meta, by_batch = TRUE) + ggtitle(g) + theme(plot.title = element_text(size = 8, face = "bold"))
+for (g in c("Lachnospiraceae")) {
+    plots[[length(plots) + 1]] <- illustrate_taxon_hit(cdModelDataSmall %>%
+        left_join(preTransplantProfilesFamily %>%
+            filter(family == g) %>%
+            select(family, relAb, PSN) %>%
+            rename(patientID = PSN)), g, meta, by_batch = FALSE, tax_level = "family") + ggtitle(g) + theme(plot.title = element_text(size = 8, face = "bold"))
 }
 
 ggsave(plot = wrap_plots(plots, guides = 'collect', nrow = 3),
-    filename = here("plots/KLGPG_221206/cd_metabolism_hits_by_batch.pdf"), width = 12, height = 7)
+    filename = here("plots/KLGPG_221206/cd_metabolism_hits.pdf"), width = 6.25, height = 6)
+
+plots <- list()
+for (g in candidate_taxa_for_prediction) {
+    plots[[length(plots) + 1]] <- illustrate_taxon_hit(do.call('rbind', modelDataAll), g, meta, by_batch = TRUE) + ggtitle(g) + theme(plot.title = element_text(size = 8, face = "bold"))
+}
+for (g in c("Lachnospiraceae")) {
+    plots[[length(plots) + 1]] <- illustrate_taxon_hit(cdModelDataSmall %>%
+        left_join(preTransplantProfilesFamily %>%
+            filter(family == g) %>%
+            select(family, relAb, PSN) %>%
+            rename(patientID = PSN)), g, meta, tax_level = "family", by_batch = TRUE) + ggtitle(g) + theme(plot.title = element_text(size = 8, face = "bold"))
+}
+
+ggsave(plot = wrap_plots(plots, guides = 'collect', nrow = 3),
+    filename = here("plots/KLGPG_221206/cd_metabolism_hits_by_batch.pdf"), width = 8, height = 5)
 
 ###############################################################################
 ##  train RF models to predict CD bracket based on clinical meta + microbiome
@@ -386,13 +465,19 @@ cdModelDataBig <- cdModelDataSmall %>%
         filter(genus %in% candidateGenera) %>%
         select(genus, relAb, PSN) %>%
         rename(patientID = PSN) %>%
-        pivot_wider(id_cols = patientID, names_from = genus, values_from = relAb))
+        pivot_wider(id_cols = patientID, names_from = genus, values_from = relAb)) %>%
+    left_join(
+        preTransplantProfilesFamily %>%
+            select(family, relAb, PSN) %>%
+            rename(patientID = PSN) %>%
+            inner_join(data.frame(family = candidate_taxa_for_prediction)) %>% pivot_wider(id_cols = patientID, names_from = family, values_from = relAb)
+    )
 
 rocObjectModelBig <- get_model_performances(
     model_data = cdModelDataBig,
     model_feature_string = c("cyp3a5star3", candidateGenera),
     resamp_n_model = resamp_n_model,
-    microbial_feature_selection_internal = candidate_genera_for_prediction,
+    microbial_feature_selection_internal = candidate_taxa_for_prediction,
     # microbial_feature_selection_internal = TRUE,
     # microbial_feature_selection_internal = FALSE,
     # model_type = "logreg")
@@ -402,7 +487,7 @@ rocObjectModelBigAll <- get_model_performances(
     model_data = cdModelDataBig,
     model_feature_string = c(clinical_covars, candidateGenera),
     resamp_n_model = resamp_n_model,
-    microbial_feature_selection_internal = candidate_genera_for_prediction,
+    microbial_feature_selection_internal = candidate_taxa_for_prediction,
     # microbial_feature_selection_internal = TRUE,
     # microbial_feature_selection_internal = FALSE,
     # model_type = "logreg")
@@ -413,13 +498,19 @@ cdModelDataOnlyTax <- cdModelDataSmall %>%
         filter(genus %in% candidateGenera) %>%
         select(genus, relAb, PSN) %>%
         rename(patientID = PSN) %>%
-        pivot_wider(id_cols = patientID, names_from = genus, values_from = relAb))
+        pivot_wider(id_cols = patientID, names_from = genus, values_from = relAb)) %>%
+    left_join(
+        preTransplantProfilesFamily %>%
+            select(family, relAb, PSN) %>%
+            rename(patientID = PSN) %>%
+            inner_join(data.frame(family = candidate_taxa_for_prediction)) %>% pivot_wider(id_cols = patientID, names_from = family, values_from = relAb)
+    )
 
 rocObjectModelOnlyTaxAll <- get_model_performances(
     model_data = cdModelDataOnlyTax,
     model_feature_string = candidateGenera,
     resamp_n_model = resamp_n_model,
-    microbial_feature_selection_internal = candidate_genera_for_prediction,
+    microbial_feature_selection_internal = candidate_taxa_for_prediction,
     # microbial_feature_selection_internal = TRUE,
     # microbial_feature_selection_internal = FALSE,
     # model_type = "logreg")
