@@ -11,8 +11,8 @@ library(ggembl)
 # source('/home/karcher/utils/utils.r')
 source(here('scripts/utils.r'))
 
-taxonomy_annot <- "ncbi_mapseq"
-# taxonomy_annot <- "gtdb_idtaxa"
+# taxonomy_annot <- "ncbi_mapseq"
+taxonomy_annot <- "gtdb_idtaxa"
 
 if (!taxonomy_annot %in% c("ncbi_mapseq", "gtdb_idtaxa")) {
     stop("Unknown taxonomy annotation")
@@ -725,7 +725,13 @@ taxa_failed <- profiles %>%
 profiles <- profiles %>%
     anti_join(taxa_failed)
 
+profiles_family <- profiles %>%
+    group_by(sampleID, PSN, visit, family) %>%
+    summarize(relAbOrig = sum(relAbOrig)) %>%
+    mutate(relAb = log10(relAbOrig + pseudoCount)) %>%
+    mutate(family = str_replace(family, "f__", ""))
+
 print(str_c("Saving all objects for downstream analysis to object", obj_path))
 
-dataList <- c('meta', 'profiles', "pcoa", 'pairwiseDistances', 'pairwiseDistancesIdentityEuclidean', "outcomeInformation", "clinicalMetadata", "orderDFPatientID", "fullTax", "importantTaxaGenus")
+dataList <- c('meta', 'profiles', 'profiles_family', "pcoa", 'pairwiseDistances', 'pairwiseDistancesIdentityEuclidean', "outcomeInformation", "clinicalMetadata", "orderDFPatientID", "fullTax", "importantTaxaGenus")
 save(list = dataList, file = obj_path)
