@@ -16,9 +16,43 @@ library(ggrepel)
 # source('/home/karcher/utils/utils.r')
 source(here('scripts/utils.r'))
 
+microbiome_confounders <- c(
+    "weight",
+    "sex",
+    "ageCategorical",
+    "v502_cakut_dis",
+    "v69_Vasculitis_dis",
+    "v70_Diabetic_Nephropathy_dis",
+    "v71_Glomerulonephritides_dis",
+    "v72_Hypertensive_Nephropathy_dis",
+    "v73_Nephrolithiasis_dis",
+    "v74_Polycystic_Kidney__dis",
+    "v75_Coronary_artery_comor",
+    "v76_Vesicoureteral_Reflux_dis",
+    "v78_Diabetes_comor",
+    "v79_Epilepsy_comor",
+    "v80_Hypertension_comor",
+    "v81_Inflammatory_bowel_comor",
+    "v82_Irritable_bowel_comor",
+    "v83_Parkinson_Disease_comor",
+    "v84_Psoriasis_comor",
+    "v85_Rheumatoid_Arthritis_comor",
+    "v12a_smoking",
+    "v14_alcohol",
+    "v15_diet",
+    "v400_previous_tx",
+    "v501_pretransplant",
+    "v66a_renal_prior",
+    "v66c_renal_prior_type"
+)
+
 resamp_n_model <- 5
+
 # model_type <- "RF"
 model_type <- "logreg"
+
+cd_what <- "CDbinary"
+# cd_what <- "CDbinary_corrected"
 
 taxonomy_annot <- "ncbi_mapseq"
 # taxonomy_annot <- "gtdb_idtaxa"
@@ -31,8 +65,8 @@ if (taxonomy_annot == "ncbi_mapseq") {
         "Coprococcus",
         "Roseburia",
         "Dorea",
-        "Faecalibacterium",
-        "Lachnospiraceae"
+        "Faecalibacterium"
+        # "Lachnospiraceae"
         # "Leuconostoc" # Super lowly abundant and heavily dependent on rarefaction seed...
     )
 } else if (taxonomy_annot == "gtdb_idtaxa") {
@@ -51,7 +85,6 @@ if (taxonomy_annot == "ncbi_mapseq") {
 # Tyzzerella <-> Faecalimonas, Anaerotignum
 # Anaerosporobacter <-> Anaerosporobacter
 # Coprococcos <-> Coprococcus_A, Faecalimonas, Batriatricus
-
 # Load data
 
 if (!taxonomy_annot %in% c("ncbi_mapseq", "gtdb_idtaxa")) {
@@ -97,10 +130,14 @@ clinical_covars <- c("cyp3a5star3", "firstAlbuminMeasurement", "ageCategorical",
 #### Primary endpoint prediction: Predict CD at baseline from microbiome ####
 ##############################################################################
 
-metabCDThreshold <- 1
 tpFilterLow <- 5
 tpFilterHigh <- 5
 allowDifference <- 1
+
+flipper <- list(
+    low = "high",
+    high = "low"
+)
 
 if (abs(tpFilterHigh - tpFilterLow) <= 1) {
     print("Setting allowDifference variable to 0...")
@@ -122,11 +159,9 @@ data <- outcomeInformation %>%
     # })) %>%
     mutate(`cdMetabolism` = map_chr(data, \(x) {
         samples <- dim(x)[1]
-        case_when(
-            sum(x$CD < metabCDThreshold) >= (samples - allowDifference) ~ "high",
-            sum(x$CD >= metabCDThreshold) >= (samples - allowDifference) ~ "low",
-            .default = "mixed"
-        )
+        # browser()
+        # return(ifelse(as.character(x[[cd_what]]) == "high", "low", "high"))
+        return(flipper[[x[[cd_what]]]])
     })) %>%
     identity() %T>%
     # mutate(`cdRatio` = map_dbl(data, \(x) {
@@ -140,8 +175,16 @@ data <- outcomeInformation %>%
     unnest() %>%
     identity()
 
+if (cd_what == "CDbinary") {
+    cd_what_what <- "CD"
+} else if (cd_what == "CDbinary_corrected") {
+    cd_what_what <- "CD_corrected"
+} else {
+    stop[str_c("Unknown CD variable: ", cd_what)]
+}
+
 p <- ggplot(data = data
-    , aes(x = visit, y = CD)) +
+    , aes_string(x = "visit", y = cd_what_what)) +
     geom_hline(yintercept = 1, linetype = 'dotted') +
     geom_boxplot(outlier.color = NA) +
     {
@@ -215,7 +258,8 @@ cdModelDataSmall <- read_tsv(here("results/CD_metabolism_map.tsv")) %>%
     select(-data) %>%
     inner_join(
         clinicalMetadata %>%
-            select(patientID, visit, cyp3a5star3, cyp3a4star22, firstAlbuminMeasurement, ageCategorical, sex, weight, firstHematocritMeasurement) %>%
+            # select(patientID, visit, cyp3a5star3, cyp3a4star22, firstAlbuminMeasurement, ageCategorical, sex, weight, firstHematocritMeasurement) %>%
+            select(patientID, visit, cyp3a5star3, cyp3a4star22, firstAlbuminMeasurement, firstHematocritMeasurement, all_of(microbiome_confounders)) %>%
             # for weight
             filter(!is.na(cyp3a5star3)) %>%
             filter(!is.na(cyp3a4star22)) %>%
@@ -232,23 +276,52 @@ cdModelDataSmall <- read_tsv(here("results/CD_metabolism_map.tsv")) %>%
 modelDataAll <- list()
 res <- list()
 resUnadjusted <- list()
+resAdjusted <- list()
 for (g in unique(preTransplantProfiles$genus)) {
-    # for (g in unique(preTransplantProfiles$family)) {
-    # for (g in unique(preTransplantProfiles$phylum)) {
+    print(g)
     cdModelData <- cdModelDataSmall %>%
         left_join(preTransplantProfiles %>%
             filter(genus == g) %>%
             select(genus, relAb, PSN) %>%
             rename(patientID = PSN))
-    cdModel <- glm(data = cdModelData,
-        # relAb here is already log10-scaled...
-        formula = cdMetabolism ~ cyp3a5star3 + cyp3a4star22 + firstAlbuminMeasurement + ageCategorical + firstHematocritMeasurement + sex + weight + relAb, family = 'binomial')
+    resUnadjustedSmall <- list()
+    for (covar in c('naive_model', "all_covariates", microbiome_confounders)) {
+        if (covar == 'naive_model') {
+            cdModel <- glm(data = cdModelData,
+                # relAb here is already log10-scaled...
+                formula = as.formula(str_c("cdMetabolism ~ relAb")), family = 'binomial')
+        } else if (covar == 'all_covariates') {
+            cdModel <- glm(data = cdModelData,
+                # relAb here is already log10-scaled...
+                formula = as.formula(str_c("cdMetabolism ~ relAb + ", str_c(microbiome_confounders, collapse = " + "))), family = 'binomial')
+        } else {
+            cdModel <- glm(data = cdModelData,
+                # relAb here is already log10-scaled...
+                formula = as.formula(str_c("cdMetabolism ~ relAb + ", covar)), family = 'binomial')
+        }
+
+        resUnadjustedSmall[[length(resUnadjustedSmall) + 1]] <- cdModel
+        names(resUnadjustedSmall)[length(resUnadjustedSmall)] <- covar
+    }
+    resAdjusted[[length(resAdjusted) + 1]] <- tibble(covar = names(resUnadjustedSmall), models = resUnadjustedSmall) %>%
+        mutate(summary = map(models, summary)) %>%
+        # mutate(cyp3a5star3_pvalue = map_dbl(summary, \(x) {
+        #     x$coefficients[rownames(x$coefficients) == "cyp3a5star3TRUE", 4]
+        # })) %>%
+        mutate(taxon_pvalue = map_dbl(summary, \(x) {
+            x$coefficients[rownames(x$coefficients) == "relAb", 4]
+        })) %>%
+        mutate(taxon_pvalue = as.numeric(taxon_pvalue))
+    names(resAdjusted)[length(resAdjusted)] <- g
+
     cdModelUnadjusted <- glm(data = cdModelData,
         # relAb here is already log10-scaled...
         formula = cdMetabolism ~ relAb, family = 'binomial')
 
     res[[length(res) + 1]] <- cdModel
     names(res)[length(res)] <- g
+
+
 
     resUnadjusted[[length(resUnadjusted) + 1]] <- cdModelUnadjusted
     names(resUnadjusted)[length(resUnadjusted)] <- g
@@ -257,28 +330,50 @@ for (g in unique(preTransplantProfiles$genus)) {
     names(modelDataAll)[length(modelDataAll)] <- g
 }
 
-resTibble <- tibble(genus = names(res), models = res) %>%
-    mutate(summary = map(models, summary)) %>%
-    mutate(cyp3a5star3_pvalue = map_dbl(summary, \(x) {
-        x$coefficients[rownames(x$coefficients) == "cyp3a5star3TRUE", 4]
-    })) %>%
-    mutate(taxon_pvalue = map(summary, \(x) {
-        x$coefficients[rownames(x$coefficients) == "relAb", 4]
-    })) %>%
-    mutate(taxon_estimate = map(summary, \(x) {
-        x$coefficients[rownames(x$coefficients) == "relAb", 1]
-    })) %>%
-    mutate(taxon_estimate_na = map_lgl(taxon_estimate, \(x) is.na(x) || length(x) == 0)) %>%
-    mutate(taxon_pvalue_na = map_lgl(taxon_pvalue, \(x) is.na(x) || length(x) == 0)) %>%
-    filter(!taxon_estimate_na) %>%
-    filter(!taxon_pvalue_na) %>%
-    mutate(taxon_estimate = as.numeric(taxon_estimate)) %>%
-    mutate(taxon_pvalue = as.numeric(taxon_pvalue)) %>%
-    left_join(profiles %>% ungroup() %>% select(genus, family, phylum) %>% distinct(), by = c('genus' = 'genus')) %>%
-    relocate(genus, family, phylum) %>%
+resTibbleAdjusted <- enframe(resAdjusted) %>%
+    unnest() %>%
+    rename(genus = name, covariate = covar) %>%
+    select(genus, covariate, taxon_pvalue)
+
+genus_order <- resTibbleAdjusted %>%
+    filter(covariate == 'naive_model') %>%
     arrange(taxon_pvalue) %>%
-    mutate(taxon_estimate = ifelse(taxon_estimate < -5, -5, taxon_estimate)) %>%
-    mutate(taxon_estimate = ifelse(taxon_estimate > 5, 5, taxon_estimate))
+    pull(genus)
+
+resTibbleAdjusted <- resTibbleAdjusted %>%
+    mutate(genus = factor(genus, levels = genus_order)) %>%
+    mutate(covariate = factor(covariate, levels = rev(
+        c(
+            'naive_model',
+            'weight',
+            'sex',
+            'ageCategorical',
+            'v15_diet',
+            "v12a_smoking",
+            "v14_alcohol",
+            microbiome_confounders[!microbiome_confounders %in% c(
+                'naive_model',
+                'weight',
+                'sex',
+                'ageCategorical',
+                'v15_diet',
+                "v12a_smoking",
+                "v14_alcohol")],
+            'all_covariates')
+    )
+    )
+    )
+
+p <- ggplot() +
+    geom_tile(data = resTibbleAdjusted, aes(x = genus, y = covariate, fill = -log10(taxon_pvalue)), color = 'white') +
+    geom_text(data = resTibbleAdjusted %>%
+        mutate(label = ifelse(taxon_pvalue < 0.05, "*", "")), aes(x = genus, y = covariate, label = label), color = '#d14481', nudge_y = -0.25, size = 3) +
+    theme_publication() +
+    scale_fill_viridis_c() +
+    theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+ggsave(plot = p, filename = here("plots/KLGPG_221206/glm_cd_cyp_tax_profiles_heatmap_single_covariate_adjusted.pdf"), width = 11, height = 4)
+
 
 resTibbleUnadjusted <- tibble(genus = names(resUnadjusted), models = resUnadjusted) %>%
     mutate(summary = map(models, summary)) %>%
@@ -303,15 +398,6 @@ resTibbleUnadjusted <- tibble(genus = names(resUnadjusted), models = resUnadjust
     mutate(taxon_estimate = ifelse(taxon_estimate < -5, -5, taxon_estimate)) %>%
     mutate(taxon_estimate = ifelse(taxon_estimate > 5, 5, taxon_estimate))
 
-lab_adjusted <- resTibble %>% filter(taxon_pvalue < 0.1)
-pAdjusted <- ggplot(data = resTibble) +
-    geom_vline(xintercept = 0, linetype = 'dotted') +
-    geom_point(aes(x = taxon_estimate, y = -log10(taxon_pvalue)), alpha = 0.5) +
-    geom_text_repel(data = lab_adjusted, aes(x = taxon_estimate, y = -log10(taxon_pvalue), label = genus)) +
-    theme_presentation() +
-    ggtitle("ADJUSTED log. regression model\npredicting CD metabolism\nfrom baseline information") +
-    NULL
-
 lab_unadjusted <- resTibbleUnadjusted %>% filter(taxon_pvalue < 0.1)
 pUnadjusted <- ggplot(data = resTibbleUnadjusted) +
     geom_vline(xintercept = 0, linetype = 'dotted') +
@@ -328,32 +414,8 @@ pUnadjusted <- ggplot(data = resTibbleUnadjusted) +
     ggtitle("UNADJUSTED log. regression model\n predicting CD metabolism\nfrom baseline information") +
     NULL
 
-scatter_data <- full_join(
-    resTibble %>% select(genus, taxon_pvalue),
-    resTibbleUnadjusted %>% select(genus, taxon_pvalue),
-    by = 'genus',
-    suffix = c("_adjusted", "_unadjusted")
-)
-scatter_plot <- ggplot(scatter_data) +
-    geom_abline(intercept = 0, slope = 1, linetype = 'dotted') +
-    geom_point(aes(x = -log10(taxon_pvalue_adjusted), y = -log10(taxon_pvalue_unadjusted)), alpha = 0.5) +
-    geom_text_repel(data =
-        scatter_data %>%
-            inner_join(
-                rbind(
-                    lab_adjusted %>% select(genus),
-                    lab_unadjusted %>% select(genus)
-                ) %>%
-                    distinct()
-            )
-    , aes(x = -log10(taxon_pvalue_adjusted), y = -log10(taxon_pvalue_unadjusted), label = genus)) +
-    theme_presentation() +
-    xlim((c(0, NA))) +
-    ylim(c(0, NA)) +
-    NULL
-
 # ggsave(pAdjusted + pUnadjusted + scatter_plot + plot_layout(guides = 'collect'), filename = here("plots/KLGPG_221206/glm_cd_cyp_tax_profiles_volcano_plots.pdf"), width = 12, height = 5)
-ggsave(pUnadjusted + scatter_plot + plot_layout(guides = 'collect'), filename = here("plots/KLGPG_221206/glm_cd_cyp_tax_profiles_volcano_plots.pdf"), width = 8, height = 4.5)
+ggsave(pUnadjusted + plot_layout(guides = 'collect'), filename = here("plots/KLGPG_221206/glm_cd_cyp_tax_profiles_volcano_plots.pdf"), width = 4, height = 4.5)
 
 (resTibbleUnadjusted %>%
     arrange(taxon_pvalue) %>%

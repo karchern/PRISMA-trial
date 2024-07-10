@@ -397,10 +397,9 @@ outcomeInformation <- outcomeInformation %>%
     select(-all_of(colnames(.)[str_detect(colnames(.), 'tacDose')])) %>%
     mutate(CD = tac_concentration / fin_tac_dose) %>%
     # height in cm, weight in kg, Haycock formula
-    # mutate(body_surface_area = 0.024265 * (height^0.3964) * weight^0.5378) %>%
     mutate(bsa_haycock = 0.024265 * (height^0.3964) * weight^0.5378) %>%
-    mutate(bsa_duboisdubois = 0.20247 * (height / 100)^0.725 * weight^0.425) %>%
-    mutate(bsa_mosteller = sqrt((height * weight) / 3600)) %>%
+    # mutate(bsa_duboisdubois = 0.20247 * (height / 100)^0.725 * weight^0.425) %>%
+    # mutate(bsa_mosteller = sqrt((height * weight) / 3600)) %>%
     mutate(CD_corrected = tac_concentration / (fin_tac_dose / bsa_haycock))
 stopifnot(all(abxInfo$allAbx == outcomeInformation %>% select(all_of(abxInfo$allAbx)) %>% colnames()))
 # Same for ABx
@@ -481,7 +480,7 @@ outcomeInformation <- outcomeInformation %>%
 
 outcomeInformation <- outcomeInformation %>%
     mutate(CDbinary = factor(ifelse(CD >= 1, "high", "low"), levels = c('low', 'high'))) %>%
-    mutate(CDbinary_corrected = factor(ifelse(CD_corrected >= 1, "high", "low"), levels = c('low', 'high')))
+    mutate(CDbinary_corrected = factor(ifelse(CD_corrected >= median(outcomeInformation$CD_corrected, na.rm = TRUE), "high", "low"), levels = c('low', 'high')))
 
 ##################################
 ##################################
