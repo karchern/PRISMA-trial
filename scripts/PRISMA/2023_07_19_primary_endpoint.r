@@ -51,8 +51,8 @@ resamp_n_model <- 5
 # model_type <- "RF"
 model_type <- "logreg"
 
-cd_what <- "CDbinary"
-# cd_what <- "CDbinary_corrected"
+# cd_what <- "CDbinary"
+cd_what <- "CDbinary_corrected"
 
 taxonomy_annot <- "ncbi_mapseq"
 # taxonomy_annot <- "gtdb_idtaxa"
