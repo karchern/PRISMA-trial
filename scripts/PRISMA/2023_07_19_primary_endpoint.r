@@ -48,8 +48,8 @@ microbiome_confounders <- c(
 
 resamp_n_model <- 5
 
-model_type <- "RF"
-# model_type <- "logreg"
+# model_type <- "RF"
+model_type <- "logreg"
 
 cd_what <- "CDbinary"
 # cd_what <- "CDbinary_corrected"
