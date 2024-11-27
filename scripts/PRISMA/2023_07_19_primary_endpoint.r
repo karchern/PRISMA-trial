@@ -48,8 +48,8 @@ microbiome_confounders <- c(
 
 resamp_n_model <- 5
 
-# model_type <- "RF"
-model_type <- "logreg"
+model_type <- "RF"
+# model_type <- "logreg"
 
 cd_what <- "CDbinary"
 # cd_what <- "CDbinary_corrected"
@@ -542,9 +542,9 @@ rocObjectModelBig <- get_model_performances(
     model_data = cdModelDataBig,
     model_feature_string = c("cyp3a5star3", candidateGenera),
     resamp_n_model = resamp_n_model,
-    microbial_feature_selection_internal = candidate_taxa_for_prediction,
+    # microbial_feature_selection_internal = candidate_taxa_for_prediction,
     # microbial_feature_selection_internal = TRUE,
-    # microbial_feature_selection_internal = FALSE,
+    microbial_feature_selection_internal = FALSE,
     # model_type = "logreg")
     model_type = model_type)
 
@@ -552,9 +552,9 @@ rocObjectModelBigAll <- get_model_performances(
     model_data = cdModelDataBig,
     model_feature_string = c(clinical_covars, candidateGenera),
     resamp_n_model = resamp_n_model,
-    microbial_feature_selection_internal = candidate_taxa_for_prediction,
+    # microbial_feature_selection_internal = candidate_taxa_for_prediction,
     # microbial_feature_selection_internal = TRUE,
-    # microbial_feature_selection_internal = FALSE,
+    microbial_feature_selection_internal = FALSE,
     # model_type = "logreg")
     model_type = model_type)
 
@@ -575,9 +575,9 @@ rocObjectModelOnlyTaxAll <- get_model_performances(
     model_data = cdModelDataOnlyTax,
     model_feature_string = candidateGenera,
     resamp_n_model = resamp_n_model,
-    microbial_feature_selection_internal = candidate_taxa_for_prediction,
+    # microbial_feature_selection_internal = candidate_taxa_for_prediction,
     # microbial_feature_selection_internal = TRUE,
-    # microbial_feature_selection_internal = FALSE,
+    microbial_feature_selection_internal = FALSE,
     # model_type = "logreg")
     model_type = model_type)
 
