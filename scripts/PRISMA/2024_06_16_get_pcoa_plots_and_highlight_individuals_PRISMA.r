@@ -22,6 +22,9 @@ if (!taxonomy_annot %in% c("ncbi_mapseq", "gtdb_idtaxa")) {
 obj_path <- here(str_c('objects/PRISMA_', taxonomy_annot, '.rdata'))
 load_data(obj_path)
 
+pcoa <- pcoa %>%
+        mutate(V2 = -1 * V2)
+
 pcoa_plot <- ggplot() +
     geom_point(data = pcoa, aes(x = V1, y = V2, color = visit)) +
     theme_presentation() +
