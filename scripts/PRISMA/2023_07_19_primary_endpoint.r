@@ -123,7 +123,9 @@ preTransplantProfilesFamily <- profiles_family %>%
     })) %>%
     unnest()
 
-candidateGenera <- unique(c(unique(preTransplantProfiles$genus), unique((preTransplantProfilesFamily$family))))
+#candidateGenera <- unique(c(unique(preTransplantProfiles$genus), unique((preTransplantProfilesFamily$family))))
+candidateGenera <- unique(c(unique(preTransplantProfiles$genus)))
+candidateGenera <- candidateGenera[!str_detect(candidateGenera, "\\[")]
 clinical_covars <- c("cyp3a5star3", "firstAlbuminMeasurement", "ageCategorical", "firstHematocritMeasurement", "sex", "weight")
 
 ##############################################################################
