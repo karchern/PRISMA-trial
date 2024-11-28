@@ -713,9 +713,9 @@ orderDFPatientID <- clinicalMetadata %>%
     )), ordered = TRUE)) %>%
     arrange(v)
 
-importantTaxaGenus <- profiles %>%
+importantTaxaMotuRaw <- profiles %>%
     mutate(relAb = (10^relAb) - pseudoCount) %>%
-    mutate(taxa = genus) %>%
+    mutate(taxa = motu_raw) %>%
     mutate(taxa = as.character(taxa)) %>%
     group_by(taxa, PSN, visit) %>%
     summarize(relAb = sum(relAb)) %>%
@@ -726,14 +726,10 @@ importantTaxaGenus <- profiles %>%
     # filter(taxa %in% c("Roseburia", "Coprococcus", "Anaerostipes", "Enterococcus"))
     identity()
 
-taxa_failed <- profiles %>%
-    filter(is.na(class)) %>%
-    ungroup() %>%
-    select(genus) %>%
-    distinct()
-
-profiles <- profiles %>%
-    anti_join(taxa_failed)
+tax_levels_prof <- str_split_fixed(profiles$motu_raw, "[|]", n = 8)
+colnames(tax_levels_prof) <- c("kingdom", "phylum", "class", "order", "family", "genus", "species", "motu")
+profiles <- cbind(profiles, tax_levels_prof) %>%
+    relocate(kingdom, phylum, class, order, family, genus, species, motu)
 
 profiles_family <- profiles %>%
     group_by(sampleID, PSN, visit, family) %>%
@@ -741,7 +737,28 @@ profiles_family <- profiles %>%
     mutate(relAb = log10(relAbOrig + pseudoCount)) %>%
     mutate(family = str_replace(family, "f__", ""))
 
+profiles_genus <- profiles %>%
+    group_by(sampleID, PSN, visit, genus) %>%
+    summarize(relAbOrig = sum(relAbOrig)) %>%
+    mutate(relAb = log10(relAbOrig + pseudoCount)) %>%
+    mutate(genus = str_replace(genus, "g__", ""))
+
+profiles_wgs <- profiles
+profiles_wgs_genus <- profiles_genus
+profiles_wgs_family <- profiles_family
+
 print(str_c("Saving all objects for downstream analysis to object", obj_path))
 
-dataList <- c('meta', 'profiles', 'profiles_family', "pcoa", 'pairwiseDistances', 'pairwiseDistancesIdentityEuclidean', "outcomeInformation", "clinicalMetadata", "orderDFPatientID", "fullTax", "importantTaxaGenus")
+dataList <- c(
+    'meta', 
+    'profiles_wgs', 
+    'profiles_wgs_family', 
+    "profiles_wgs_genus", 
+    "pcoa", 
+    'pairwiseDistances', 
+    'pairwiseDistancesIdentityEuclidean', 
+    "outcomeInformation", 
+    "clinicalMetadata", 
+    "orderDFPatientID", 
+    "importantTaxaMotuRaw")
 save(list = dataList, file = obj_path)
