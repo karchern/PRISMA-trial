@@ -731,7 +731,14 @@ importantTaxaMotuRaw <- profiles %>%
 tax_levels_prof <- str_split_fixed(profiles$motu_raw, "[|]", n = 8)
 colnames(tax_levels_prof) <- c("kingdom", "phylum", "class", "order", "family", "genus", "species", "motu")
 profiles <- cbind(profiles, tax_levels_prof) %>%
-    relocate(kingdom, phylum, class, order, family, genus, species, motu)
+    relocate(kingdom, phylum, class, order, family, genus, species, motu) %>%
+    filter(!str_detect(genus, "incertae")) %>%
+    mutate(
+        genus = str_replace(genus, ".*gen. ", ""),
+        genus = str_replace(genus, "\\[", ""),
+        genus = str_replace(genus, "\\]", ""),
+        genus = str_replace_all(genus, "/", "_")
+    )
 
 profiles_family <- profiles %>%
     group_by(sampleID, PSN, visit, family, batch) %>%
@@ -743,7 +750,22 @@ profiles_genus <- profiles %>%
     group_by(sampleID, PSN, visit, genus, batch) %>%
     summarize(relAbOrig = sum(relAbOrig)) %>%
     mutate(relAb = log10(relAbOrig + pseudoCount)) %>%
-    mutate(genus = str_replace(genus, "g__", ""))
+    mutate(genus = str_replace(genus, "g__", "")) %>%
+    #mutate(family = str_replace(family, "f__", "")) %>%
+    ungroup()
+
+importantTaxaGenus <- profiles_genus %>%
+    mutate(relAb = (10^relAb) - pseudoCount) %>%
+    mutate(taxa = genus) %>%
+    mutate(taxa = as.character(taxa)) %>%
+    group_by(taxa, PSN, visit) %>%
+    summarize(relAb = sum(relAb)) %>%
+    group_by(taxa) %>%
+    summarize(m = mean(relAb > pseudoCount) > 0.2, mm = any(relAb > 0.01)) %>%
+    filter(m & mm) %>%
+    select(taxa) %>%
+    # filter(taxa %in% c("Roseburia", "Coprococcus", "Anaerostipes", "Enterococcus"))
+    identity()
 
 pairwiseDistancesGenus <- pivot_wider(profiles_genus, id_cols = genus, names_from = c(sampleID, batch), values_from = relAb, names_sep = "___") %>%
     column_to_rownames("genus") %>%
@@ -783,5 +805,6 @@ dataList <- c(
     "outcomeInformation", 
     "clinicalMetadata", 
     "orderDFPatientID", 
-    "importantTaxaMotuRaw")
+    "importantTaxaMotuRaw",
+    "importantTaxaGenus")
 save(list = dataList, file = obj_path)

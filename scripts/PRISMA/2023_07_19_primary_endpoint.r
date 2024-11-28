@@ -48,13 +48,14 @@ microbiome_confounders <- c(
 
 resamp_n_model <- 5
 
-# model_type <- "RF"
-model_type <- "logreg"
+model_type <- "RF"
+# model_type <- "logreg"
 
 cd_what <- "CDbinary"
 # cd_what <- "CDbinary_corrected"
 
-taxonomy_annot <- "ncbi_mapseq"
+taxonomy_annot <- "ncbi_motus"
+# taxonomy_annot <- "ncbi_mapseq"
 # taxonomy_annot <- "gtdb_idtaxa"
 
 if (taxonomy_annot == "ncbi_mapseq") {
@@ -78,6 +79,20 @@ if (taxonomy_annot == "ncbi_mapseq") {
         "Roseburia",
         "Dorea"
     )
+} else if (taxonomy_annot == "ncbi_motus") {
+    candidate_taxa_for_prediction <- c(
+    "Dorea",
+    "Parasutterella",
+    #"Erysipelotrichaceae gen. incertae sedis",
+    #"Lachnospiraceae gen. incertae sedis",
+    "Coprobacter",
+    #"Clostridiales gen. [Ruminococcus/Clostridium]",
+    "Ruminococcus_Clostridium",
+    "Anaerostipes",
+    "Sutterella",
+    "Ruminococcus_Eubacterium",
+    "Bilophila"
+    )
 }
 
 
@@ -87,12 +102,15 @@ if (taxonomy_annot == "ncbi_mapseq") {
 # Coprococcos <-> Coprococcus_A, Faecalimonas, Batriatricus
 # Load data
 
-if (!taxonomy_annot %in% c("ncbi_mapseq", "gtdb_idtaxa")) {
+if (!taxonomy_annot %in% c("ncbi_mapseq", "gtdb_idtaxa", "ncbi_motus")) {
     stop("Unknown taxonomy annotation")
 }
 
 obj_path <- here(str_c('objects/PRISMA_', taxonomy_annot, '.rdata'))
 load_data(obj_path)
+
+profiles <- profiles_wgs_genus
+profiles_family <- profiles_wgs_family
 
 preTransplantProfiles <- profiles %>%
     mutate(genus = str_replace_all(genus, "-", "_")) %>%
@@ -394,11 +412,23 @@ resTibbleUnadjusted <- tibble(genus = names(resUnadjusted), models = resUnadjust
     filter(!taxon_pvalue_na) %>%
     mutate(taxon_estimate = as.numeric(taxon_estimate)) %>%
     mutate(taxon_pvalue = as.numeric(taxon_pvalue)) %>%
-    left_join(profiles %>% ungroup() %>% select(genus, family, phylum) %>% distinct(), by = c('genus' = 'genus')) %>%
+    left_join(profiles_wgs %>% 
+        ungroup() %>% 
+        select(genus, family, phylum) %>%
+        mutate(genus = str_replace(genus, "g__", "")) %>%
+        mutate(family = str_replace(family, "f__", "")) %>%
+        mutate(phylum = str_replace(phylum, "p__", "")) %>%
+        distinct(genus, .keep_all = TRUE) %>%
+        ungroup() %>%
+        distinct() %>%
+        identity()
+        , by = c('genus' = 'genus')) %>%
     relocate(genus, family, phylum) %>%
     arrange(taxon_pvalue) %>%
     mutate(taxon_estimate = ifelse(taxon_estimate < -5, -5, taxon_estimate)) %>%
-    mutate(taxon_estimate = ifelse(taxon_estimate > 5, 5, taxon_estimate))
+    mutate(taxon_estimate = ifelse(taxon_estimate > 5, 5, taxon_estimate)) %>%
+    distinct(genus, .keep_all = TRUE) %>%
+    arrange(taxon_pvalue)
 
 lab_unadjusted <- resTibbleUnadjusted %>% filter(taxon_pvalue < 0.1)
 pUnadjusted <- ggplot(data = resTibbleUnadjusted) +
@@ -417,18 +447,20 @@ pUnadjusted <- ggplot(data = resTibbleUnadjusted) +
     NULL
 
 # ggsave(pAdjusted + pUnadjusted + scatter_plot + plot_layout(guides = 'collect'), filename = here("plots/KLGPG_221206/glm_cd_cyp_tax_profiles_volcano_plots.pdf"), width = 12, height = 5)
-ggsave(pUnadjusted + plot_layout(guides = 'collect'), filename = here("plots/KLGPG_221206/glm_cd_cyp_tax_profiles_volcano_plots.pdf"), width = 4, height = 4.5)
+ggsave(pUnadjusted + plot_layout(guides = 'collect'), filename = here("plots/KLGPG_221206/glm_cd_cyp_tax_profiles_volcano_plots.pdf"), width = 4.5, height = 4.5)
 
-(resTibbleUnadjusted %>%
-    arrange(taxon_pvalue) %>%
-    head(50) %>%
-    mutate(genus = factor(genus, levels = genus)) %>%
-    ggplot(aes(x = genus, y = taxon_pvalue, fill = phylum)) +
-    theme_presentation() +
-    theme(axis.text.x = element_text(angle = 60, hjust = 1)) +
-    geom_bar(stat = 'identity')) %>%
-    ggsave(filename = here("plots/KLGPG_221206/glm_cd_cyp_tax_profiles_phylum.pdf"), width = 12, height = 3.5)
+tmp <- resTibbleUnadjusted %>%
+    head(50) %>% 
+    group_by(genus) %>% 
+    mutate(family = str_c(family, 1:length(family))) %>%
+    arrange(taxon_pvalue)
+tmp$genus <- factor(tmp$genus, levels = tmp$genus)
 
+(ggplot(data = tmp, aes(x = genus, y = taxon_pvalue, fill = phylum)) +
+theme_presentation() +
+theme(axis.text.x = element_text(angle = 60, hjust = 1)) +
+geom_bar(stat = 'identity')) %>%
+ggsave(filename = here("plots/KLGPG_221206/glm_cd_cyp_tax_profiles_phylum.pdf"), width = 12, height = 4.75)
 
 top_fam <- resTibbleUnadjusted %>%
     arrange(taxon_pvalue) %>%
@@ -542,9 +574,9 @@ rocObjectModelBig <- get_model_performances(
     model_data = cdModelDataBig,
     model_feature_string = c("cyp3a5star3", candidateGenera),
     resamp_n_model = resamp_n_model,
-    microbial_feature_selection_internal = candidate_taxa_for_prediction,
+    # microbial_feature_selection_internal = candidate_taxa_for_prediction,
     # microbial_feature_selection_internal = TRUE,
-    # microbial_feature_selection_internal = FALSE,
+    microbial_feature_selection_internal = FALSE,
     # model_type = "logreg")
     model_type = model_type)
 
@@ -552,9 +584,9 @@ rocObjectModelBigAll <- get_model_performances(
     model_data = cdModelDataBig,
     model_feature_string = c(clinical_covars, candidateGenera),
     resamp_n_model = resamp_n_model,
-    microbial_feature_selection_internal = candidate_taxa_for_prediction,
+    # microbial_feature_selection_internal = candidate_taxa_for_prediction,
     # microbial_feature_selection_internal = TRUE,
-    # microbial_feature_selection_internal = FALSE,
+    microbial_feature_selection_internal = FALSE,
     # model_type = "logreg")
     model_type = model_type)
 
@@ -575,9 +607,9 @@ rocObjectModelOnlyTaxAll <- get_model_performances(
     model_data = cdModelDataOnlyTax,
     model_feature_string = candidateGenera,
     resamp_n_model = resamp_n_model,
-    microbial_feature_selection_internal = candidate_taxa_for_prediction,
+    # microbial_feature_selection_internal = candidate_taxa_for_prediction,
     # microbial_feature_selection_internal = TRUE,
-    # microbial_feature_selection_internal = FALSE,
+    microbial_feature_selection_internal = FALSE,
     # model_type = "logreg")
     model_type = model_type)
 
