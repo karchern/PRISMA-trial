@@ -87,16 +87,3 @@ ggsave(
     filename =  here("plots/KLGPG_221206/pcoa_WGS_vs_16S_v1.pdf"),
     width = 6, height = 6
 )
-
-
-# Compute a PERMANOVA in distance space using batch
-stopifnot(all(pairwiseDistancesGenusAll %>% as.matrix() %>% rownames() %>% map(\(x) str_split(x, "___")[[1]][1]) %>% unlist() == pcoa$sampleID))
-pcoa_perm <- adonis2(pairwiseDistancesGenusAll ~ batch, data = pcoa, permutations = 999)
-pcoa_plot <- ggplot() +
-    geom_point(data = pcoa, aes(x = V1, y = V2, color = batch)) +
-    theme_presentation() +
-    xlab("PCo 1") +
-    ylab("PCo 2") +
-    scale_color_manual(values = batch_colors) +
-    annotate('text', x = min(pcoa$V1) + (0.0 * abs(max(pcoa$V2) - min(pcoa$V2))), y = min(pcoa$V2) + (0.025 * abs(max(pcoa$V1) - min(pcoa$V1))), label = str_c("PERMANOVA p-value: ", round(pcoa_perm$`Pr(>F)`[which(rownames(pcoa_perm) == "batch")], 3), "\nPERMANOVA R2: ", round(pcoa_perm$`R2`[which(rownames(pcoa_perm) == "batch")], 3)), hjust = 0)
-
