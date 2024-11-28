@@ -56,7 +56,7 @@ pairwiseDistancesGenusAll <- combined %>%
     mutate(s = str_c(PSN, visit, sampleID, type, batch, sep = "___")) %>%
     ungroup() %>%
     select(s, genus, relAb) %>%
-    inner_join(shared_genera) %>%
+    #inner_join(shared_genera) %>%
     pivot_wider(names_from = genus, values_from = relAb) %>%
     as.data.frame() %>%
     column_to_rownames('s') %>%
