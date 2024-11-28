@@ -120,19 +120,12 @@ profiles <- profiles %>%
     as.data.frame() %>%
     pivot_longer(
         -c(
-            motu_raw, 
-            mOTU_ID,
-            species,
-            genus,
-            family)) %>%
+            motu_raw
+        )) %>%
     mutate(sampleID = str_split_fixed(name, "___", n = 2)[, 1]) %>%
     mutate(batch = str_split_fixed(name, "___", n = 2)[, 2]) %>%
     group_by(
         motu_raw, 
-        mOTU_ID,
-        species,
-        genus,
-        family,
         sampleID, 
         batch) %>%
     mutate(value = as.numeric(value)) %>%
