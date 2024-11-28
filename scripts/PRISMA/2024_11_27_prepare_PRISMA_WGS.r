@@ -26,150 +26,161 @@ PRISMA_modelling <- readRDS(here("profiles/WGS/240813_MG011_PRISMA_NovaSeq_final
 
 # put everything into a named list
 profiles <- list(
-    PRISMA_interim_Batch1 = PRISinterim_Batch1,
-    PRISMA_interim_Batch2 = PRISinterim_Batch2,
-    PRISMA_interim_Batch3 = PRISinterim_Batch3,
-    PRISMA_interim_Batch4 = PRISinterim_Batch4,
-    PRISMA_interim_Batch5 = PRISinterim_Batch5,
-    PRISMA_modelling = PRISMA_modelling
+    interim_Batch1 = PRISMA_interim_Batch1,
+    interim_Batch2 = PRISMA_interim_Batch2,
+    interim_Batch3 = PRISMA_interim_Batch3,
+    interim_Batch4 = PRISMA_interim_Batch4,
+    interim_Batch5 = PRISMA_interim_Batch5,
+    modelling = PRISMA_modelling
 )
 
-
-# meta <- read_tsv(here("data/16S_metadata/221227_PRISMA_16S_Overview.tsv")) %>%
-meta <- read_tsv(here("data/16S_metadata/221227_PRISMA_16S_modelling_cohort_Batch_A_and_Batch_B_overview.tsv"), show_col_types = FALSE) %>%
-    select(PSN, Visit, ID, Sample_ID, `Sequencing Batch for 16S miSeq`) %>%
-    mutate(batch = case_when(
-        `Sequencing Batch for 16S miSeq` == "A" ~ "modellingBatchA",
-        `Sequencing Batch for 16S miSeq` == "B" ~ "modellingBatchB",
-        .default = NA
-    )) %>%
-    select(-`Sequencing Batch for 16S miSeq`) %>%
-    rbind(read_tsv(here("data/16S_metadata/221227_PRISMA_16S_Overview.tsv"), show_col_types = FALSE) %>%
-        select(PSN, Visit, ID, Sample_ID) %>%
-    mutate(batch = "interim")) %>%
-    rename(sampleID = Sample_ID, visit = Visit) %>%
-    mutate(PSN = str_replace(PSN, "Mue", "M")) %>%
-    mutate(PSN = str_replace(PSN, "MÜ", "M")) %>%
-    mutate(PSN = str_replace(PSN, "ä", "ae")) %>%
-    mutate(PSN = str_replace(PSN, "ö", "oe")) %>%
-    mutate(PSN = str_replace(PSN, "ü", "ue")) %>%
-    mutate(PSN = str_replace(PSN, "Ä", "AE")) %>%
-    mutate(PSN = str_replace(PSN, "Ö", "OE")) %>%
-    mutate(PSN = str_replace(PSN, "Ü", "UE")) %>%
-    mutate(PSN = str_replace(PSN, "NTXM", "NZMU")) %>%
-    mutate(PSN = str_replace(PSN, "-0", "-"))
-
-# Remove funny colnames with encoding
-meta <- meta[, !str_detect(colnames(meta), "Conc")]
-meta <- meta[, !str_detect(colnames(meta), "10 ng")]
-# fullTax <- read_tsv(here("data/MAPseq_AlessioCurated.tax"), col_names = F, show_col_types = FALSE)
-# fullTax <- read_tsv(here('data/gtdbk_tax_r207.tab'), col_names = F, show_col_types = FALSE)
-fullTax <- read_tsv(here(str_c("data/", taxonomy_annot, ".tax")), col_names = F, show_col_types = FALSE)
-fullTax <- fullTax %>%
-    mutate(X6 = map_chr(X6, \(x) {
-        if (str_detect(x, "\\[Eubacterium\\]")) {
-            x <- "Eubacterium"
-        } else {
-            x <- x
-        }
-        return(x)
-    }))
-colnames(fullTax) <- c(
-    "kingdom",
-    "phylum",
-    "class",
-    "order",
-    "family",
-    "genus",
-    "species"
-)
-fullTax <- fullTax %>%
-    select(-species) %>%
-    distinct() %>%
-    group_by(genus) %>%
-    nest() %>%
-    mutate(data = map2(data, genus, \(x, g) {
-        if (g == "Eubacterium") {
-            return(x %>% filter(family == "Lachnospiraceae"))
-        } else {
-            return(x)
-        }
-    })) %>%
-    unnest()
-
-
-if ("Bacteria" %in% rownames(profiles)) {
-    profiles <- profiles[!rownames(profiles) == "Bacteria", ]
-}
-colnames(profiles) <- map_chr(colnames(profiles), function(x) str_replace(x, ".*lane1", ""))
-profiles <- profiles[, !str_detect(colnames(profiles), "water")]
-colnames(profiles) <- map_chr(colnames(profiles), function(x) str_replace(x, "MG", "MG_"))
-colnames(profiles) <- map_chr(colnames(profiles), function(x) str_replace(x, "[.]singles$", ""))
-
-rownames(profiles) <- map_chr(rownames(profiles), \(x) {
-    if (str_detect(x, "\\[Eubacterium\\]")) {
-        x <- "Eubacterium"
+profiles <- map2(profiles, names(profiles), \(x, na) {
+    cn <- colnames(x)
+    if (str_detect(na, "Batch4") | str_detect(na, "Batch5")) {
+        cn <- map_chr(cn, \(x) str_replace(x, ".*lane1", "MG_"))
+        #cn <- str_replace(cn, "MG", "MG_")
     } else {
-        x <- x
+        cn <- map_chr(cn, \(x) str_replace(x, ".*lane1", ""))
+        cn <- str_replace(cn, "MG", "MG_")
     }
+
+    colnames(x) <- cn
+    return(x)
+    }
+)
+
+map(profiles, \(x) head(colnames(x))) 
+
+metadata_files <- map(names(profiles), \(x) {
+    tmp <- read_tsv(here('profiles/WGS/', str_c(x, '_meta.tsv')))
+})
+
+names(metadata_files) <- names(profiles)
+metadata_files <- map2(metadata_files, names(metadata_files), \(x, me) {
+    x <- x %>%
+        mutate(PSN = str_replace(PSN, "Mue", "M")) %>%
+        mutate(PSN = str_replace(PSN, "MÜ", "M")) %>%
+        mutate(PSN = str_replace(PSN, "ä", "ae")) %>%
+        mutate(PSN = str_replace(PSN, "ö", "oe")) %>%
+        mutate(PSN = str_replace(PSN, "ü", "ue")) %>%
+        mutate(PSN = str_replace(PSN, "Ä", "AE")) %>%
+        mutate(PSN = str_replace(PSN, "Ö", "OE")) %>%
+        mutate(PSN = str_replace(PSN, "Ü", "UE")) %>%
+        mutate(PSN = str_replace(PSN, "NTXM", "NZMU")) %>%
+        mutate(PSN = str_replace(PSN, "-0", "-")) %>%
+        mutate(batch = me)
     return(x)
 })
 
+for (batch in c(
+    "interim_Batch1",
+    "interim_Batch2",
+    "interim_Batch3",
+    "interim_Batch4",
+    "interim_Batch5")) {
+        metadata_files[[batch]] <- metadata_files[[batch]] %>%
+            mutate(Visit = as.numeric(str_replace(SampleName, ".*_Visit_", ""))) %>%
+            select(-SampleName, -ID) %>%
+            relocate(PSN, Visit, Sample_ID)
+    }
+
+map(metadata_files, \(x) head(colnames(x)))
+
+## Some sanity checks
+pmap(list(profiles, metadata_files, names(metadata_files)), \(x, y, na) {
+    print(na)
+    print(colnames(x) %in% y$Sample_ID)
+    print((y$Sample_ID %in% colnames(x)))
+})
+
+profiles <- map2(names(profiles), profiles, \(batch_name, x) x %>%
+    as.data.frame() %>%
+    rownames_to_column('taxon') %>%
+    pivot_longer(-taxon) %>%
+    rename(sampleID = name, count = value) %>%
+    mutate(batch = batch_name)) %>%
+    do.call('rbind', .) %>%
+    pivot_wider(id_cols = c(taxon), names_from = c(sampleID, batch), values_from = count, values_fill = 0, names_sep = "___") %>%
+    as.data.frame() %>% column_to_rownames('taxon') %>% as.matrix()
+
+meta <- do.call('rbind', metadata_files) %>%
+    rename(sampleID = Sample_ID)
 
 # god forgive me...
+
 profiles <- cbind(profiles, rownames(profiles))
-colnames(profiles)[dim(profiles)[2]] <- "genus"
+colnames(profiles)[dim(profiles)[2]] <- "motu_raw"
+profiles <- as.data.frame(profiles)
+profiles$mOTU_ID <- str_split_fixed(rownames(profiles), "_", n = 8)[, 8]
+profiles$species <- str_split_fixed(rownames(profiles), "_", n = 8)[, 7]
+profiles$genus <- str_split_fixed(rownames(profiles), "_", n = 8)[, 6]
+profiles$family <- str_split_fixed(rownames(profiles), "_", n = 8)[, 5]
 
 profiles <- profiles %>%
     as.data.frame() %>%
-    # data.frame(check.rows = F, check.names = F) %>%
-    # mutate(genus = rownames(.)) %>%
-    pivot_longer(-genus) %>%
-    # rename(sampleID = name, count = value) %>%
+    pivot_longer(
+        -c(
+            motu_raw, 
+            mOTU_ID,
+            species,
+            genus,
+            family)) %>%
     mutate(sampleID = str_split_fixed(name, "___", n = 2)[, 1]) %>%
     mutate(batch = str_split_fixed(name, "___", n = 2)[, 2]) %>%
-    group_by(genus, sampleID, batch) %>%
+    group_by(
+        motu_raw, 
+        mOTU_ID,
+        species,
+        genus,
+        family,
+        sampleID, 
+        batch) %>%
     mutate(value = as.numeric(value)) %>%
     summarize(count = sum(value)) %>%
-    inner_join(meta, by = c('sampleID', 'batch'))
+    inner_join(meta, by = c('sampleID', 'batch')) %>%
+    rename(visit = Visit)
 
 print("Computing depths...")
 depths <- profiles %>%
     group_by(sampleID, batch, visit) %>%
-    summarize(totalGenusReadCount = sum(count))
+    summarize(totalReadCount = sum(count))
 
 print("Plotting depth histogram...")
 depth_histo <- ggplot(depths %>%
-    mutate(visit = as.factor(visit))) +
+    #mutate(visit = as.factor(visit))) +
+    mutate(visit = factor(visit, levels = 1:7))) +
     theme_classic() +
-    geom_histogram(aes(x = totalGenusReadCount), alpha = 1, position = "identity") +
-    geom_vline(xintercept = rarefactionDepth) +
+    geom_histogram(aes(x = totalReadCount), alpha = 1, position = "identity") +
+    geom_vline(xintercept = rarefactionDepthWGS) +
     geom_text(data = depths %>%
         mutate(visit = as.factor(visit)) %>%
         group_by(visit, batch) %>%
-        filter(totalGenusReadCount < rarefactionDepth) %>%
-        tally(), aes(x = rarefactionDepth * 0.5, y = 5, label = n)) +
+        mutate(visit = factor(visit, levels = 1:7)) %>%
+        filter(totalReadCount < rarefactionDepthWGS) %>%
+        tally(), aes(x = rarefactionDepthWGS + 5000, y = 5, label = n, color = 'red')) +
     facet_grid(visit ~ batch) +
     ylab("Number of\nsamples") +
-    xlab("Sequencing depth") +
+    xlab("mOTU counts") +
     theme_presentation() +
+    theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
     scale_y_continuous(breaks = c(1, 3, 5, 7, 9, 11))
 
-ggsave(plot = depth_histo, filename = here("plots/KLGPG_221206/depth_histogram.pdf"), width = 8, height = 6)
+ggsave(plot = depth_histo, filename = here("plots/KLGPG_221206/depth_histogram_WGS.pdf"), width = 10, height = 6)
 
 highDepthSamples <- depths %>%
     mutate(visit = as.factor(visit)) %>%
     group_by(sampleID, batch) %>%
-    filter(totalGenusReadCount >= rarefactionDepth) %>%
+    filter(totalReadCount >= rarefactionDepthWGS) %>%
     select(sampleID)
 
 print("Keeping samples with reasonably depth...")
-print(str_c("Rarefaction depth: ", rarefactionDepth))
-for (B in c("modellingBatchA", "modellingBatchB", "interim")) {
+print(str_c("Rarefaction depth: ", rarefactionDepthWGS))
+#for (B in c("modellingBatchA", "modellingBatchB", "interim")) {
+for (B in unique(depths$batch)) {
     n <- profiles %>% ungroup() %>% filter(batch == B) %>% anti_join(highDepthSamples, by = c("sampleID", "batch")) %>% select(sampleID) %>% distinct() %>% nrow()
     N <- profiles %>% ungroup() %>% filter(batch == B) %>% select(sampleID) %>% distinct() %>% nrow()
     f <- n / N
-    print(str_c("Removing samples with low depth in batch ", B, ": ", n, ' corresponding to ', round(f, 3), ' of all samples'))
+    print(str_c("Removing samples with low depth in batch ", B, ": ", n, ' corresponding to ', round(f, 3), '% of all samples'))
 }
 
 profiles <- profiles %>%
@@ -183,7 +194,7 @@ profiles <- profiles %>%
     relocate(tmp) %>%
     column_to_rownames("tmp") %>%
     select(-sampleID, -batch) %>%
-    rrarefy(sample = rarefactionDepth) %>%
+    rrarefy(sample = rarefactionDepthWGS) %>%
     as.data.frame() %>%
     rownames_to_column('tmp') %>%
     mutate(sampleID = str_split_fixed(tmp, "___", n = 2)[, 1]) %>%
@@ -222,7 +233,8 @@ profiles <- profiles %>%
     mutate(relAbOrig = relAb) %>%
     mutate(relAb = log10(relAb + pseudoCount)) %>%
     inner_join(meta, by = c("sampleID", "batch")) %>%
-    left_join(fullTax %>% mutate(genus = str_replace(genus, "^g__", "")), by = 'genus')
+    #left_join(fullTax %>% mutate(genus = str_replace(genus, "^g__", "")), by = 'genus')
+    identity() # fix later
 
 profiles <- profiles %>%
     group_by(PSN, visit) %>%
