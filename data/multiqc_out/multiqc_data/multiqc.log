@@ -1,0 +1,4 @@
+[2024-11-28 07:28:04,210] multiqc.core.update_config                         [INFO   ]  Prepending directory to sample names
+[2024-11-28 07:28:04,324] multiqc.core.version_check                         [WARNING]  MultiQC Version v1.25.2 now available!
+[2024-11-28 07:28:04,324] multiqc.core.file_search                           [INFO   ]  Search path: /scratch/karcher/fastqc
+[2024-11-28 07:29:39,622] multiqc.modules.fastqc.fastqc                      [INFO   ]  Found 938 reports
