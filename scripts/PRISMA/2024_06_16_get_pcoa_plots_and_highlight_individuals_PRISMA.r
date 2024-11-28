@@ -12,23 +12,21 @@ library(ggembl)
 source(here('scripts/utils.r'))
 
 
-#####
-# taxonomy_annot is not being accessed if WGS data is loaded!
-# If you indeed use WGS data, make sure to set this to ""
-taxonomy_annot <- ""
+taxonomy_annot <- "ncbi_motus"
 # taxonomy_annot <- "ncbi_mapseq"
 # taxonomy_annot <- "gtdb_idtaxa"
 
-if (!taxonomy_annot %in% c("ncbi_mapseq", "gtdb_idtaxa", "")) {
+if (!taxonomy_annot %in% c("ncbi_mapseq", "gtdb_idtaxa", "ncbi_motus")) {
     if (taxonomy_annot == "") {
         print("No taxonomy annotation specified, this means youre working with WGS data")
     }
     stop("Unknown taxonomy annotation")
 }
 
-#obj_path <- here(str_c('objects/PRISMA_', taxonomy_annot, '.rdata'))
-obj_path <- here(str_c('objects/PRISMA_WGS', taxonomy_annot, '.rdata'))
+obj_path <- here(str_c('objects/PRISMA_', taxonomy_annot, '.rdata'))
 load_data(obj_path)
+
+profiles <- profiles_wgs
 
 pcoa <- pcoa %>%
         mutate(V2 = -1 * V2)
@@ -210,3 +208,44 @@ for (taxL in c(
 
     }
 }
+
+
+#############################
+## genus-level PCoA (for WGS)
+#############################
+pcoa <- pcoaGenus %>%
+            mutate(V2 = -1 * V2)
+
+pcoa_plot <- ggplot() +
+    geom_point(data = pcoa, aes(x = V1, y = V2, color = visit)) +
+    theme_presentation() +
+    xlab("PCo 1") +
+    ylab("PCo 2") +
+    scale_color_manual(values = time_point_colors)
+
+ggsave(plot = pcoa_plot, filename = here("plots/KLGPG_221206/pcoa_visit_v1_wgs_genus.pdf"), width = 5.5, height = 3.5)
+
+pcoa_plot <- ggplot() +
+    geom_point(data =
+        pcoa %>%
+            filter(visit != 3) %>%
+            mutate(visit = factor(map_chr(visit, \(x) labelLink[x]), levels = labelLink)), aes(x = V1, y = V2, color = visit)) +
+    theme_presentation() +
+    xlab("PCo 1") +
+    ylab("PCo 2") +
+    scale_color_manual(values = time_point_colors[c(1:2, 4:7)])
+
+ggsave(plot = pcoa_plot, filename = here("plots/KLGPG_221206/pcoa_visit_v2_wgs_genus.pdf"), width = 8, height = 3.5)
+
+# Compute a PERMANOVA in distance space using batch
+stopifnot(all(pairwiseDistancesGenus %>% as.matrix() %>% rownames() %>% map(\(x) str_split(x, "___")[[1]][1]) %>% unlist() == pcoa$sampleID))
+pcoa_perm <- adonis2(pairwiseDistancesGenus ~ batch, data = pcoa, permutations = 999)
+pcoa_plot <- ggplot() +
+    geom_point(data = pcoa, aes(x = V1, y = V2, color = batch)) +
+    theme_presentation() +
+    xlab("PCo 1") +
+    ylab("PCo 2") +
+    scale_color_manual(values = batch_colors) +
+    annotate('text', x = min(pcoa$V1) + (0.0 * abs(max(pcoa$V2) - min(pcoa$V2))), y = min(pcoa$V2) + (0.025 * abs(max(pcoa$V1) - min(pcoa$V1))), label = str_c("PERMANOVA p-value: ", round(pcoa_perm$`Pr(>F)`[which(rownames(pcoa_perm) == "batch")], 3), "\nPERMANOVA R2: ", round(pcoa_perm$`R2`[which(rownames(pcoa_perm) == "batch")], 3)), hjust = 0)
+
+ggsave(plot = pcoa_plot, filename = here("plots/KLGPG_221206/pcoa_batch_wgs_genus.pdf"), width = 5.5, height = 3.5)
