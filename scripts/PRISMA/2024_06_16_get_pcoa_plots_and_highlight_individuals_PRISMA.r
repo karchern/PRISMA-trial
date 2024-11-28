@@ -12,14 +12,22 @@ library(ggembl)
 source(here('scripts/utils.r'))
 
 
-taxonomy_annot <- "ncbi_mapseq"
+#####
+# taxonomy_annot is not being accessed if WGS data is loaded!
+# If you indeed use WGS data, make sure to set this to ""
+taxonomy_annot <- ""
+# taxonomy_annot <- "ncbi_mapseq"
 # taxonomy_annot <- "gtdb_idtaxa"
 
-if (!taxonomy_annot %in% c("ncbi_mapseq", "gtdb_idtaxa")) {
+if (!taxonomy_annot %in% c("ncbi_mapseq", "gtdb_idtaxa", "")) {
+    if (taxonomy_annot == "") {
+        print("No taxonomy annotation specified, this means youre working with WGS data")
+    }
     stop("Unknown taxonomy annotation")
 }
 
-obj_path <- here(str_c('objects/PRISMA_', taxonomy_annot, '.rdata'))
+#obj_path <- here(str_c('objects/PRISMA_', taxonomy_annot, '.rdata'))
+obj_path <- here(str_c('objects/PRISMA_WGS', taxonomy_annot, '.rdata'))
 load_data(obj_path)
 
 pcoa <- pcoa %>%

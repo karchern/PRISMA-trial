@@ -36,7 +36,16 @@ quantilesP <- c(0.5, 0.6, 0.7, 0.8, 0.9, 1.0)
 batch_colors <- c(
     interim = "#85C1E9",
     modellingBatchA = "#F88379",
-    modellingBatchB = "#A9DFBF")
+    modellingBatchB = "#A9DFBF",
+    interim_Batch1 = "#FF6347",  # Tomato
+    interim_Batch2 = "#1E90FF",  # DodgerBlue
+    interim_Batch3 = "#9370DB",  # MediumPurple
+    interim_Batch4 = "#3CB371",  # MediumSeaGreen
+    interim_Batch5 = "#FFA07A",  # LightSalmon
+    modelling = "#9ACD32"        # YellowGreen
+)
+# give me 5 more batch colors for batches 
+
 
 rarefactionDepth <- 1E4
 rarefactionDepthWGS <- 5E3
