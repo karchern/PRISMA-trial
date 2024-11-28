@@ -3,7 +3,7 @@ library(tidyverse)
 library(ggembl)
 
 # depth
-p <- read_tsv(here("data/fastqc_sequence_counts_plot.tsv"), col_names = TRUE) %>%
+p <- read_tsv(here("data/multiqc_out/multiqc_data/fastqc_sequence_counts_plot.txt"), col_names = TRUE) %>%
     mutate(batch_raw = str_split_fixed(Sample, " [|] ", n = 6)[, 5]) %>%
     mutate(
         batch = str_replace(batch_raw, "_for_Q", ""),
@@ -30,7 +30,7 @@ ggsave(
 )
 
 # Read quality
-data <- read_tsv(here("data/fastqc_per_base_sequence_quality_plot.tsv"), col_names = FALSE)
+data <- read_tsv(here("data/multiqc_out/multiqc_data/fastqc_per_base_sequence_quality_plot.tsv"), col_names = FALSE)
 # Separate X and Y data
 x_data <- data %>% filter(X2 == "X") %>% select(-X2) %>% rename(s = X1)
 y_data <- data %>% filter(X2 == "Y") %>% select(-X2) %>% rename(s = X1)
@@ -59,11 +59,11 @@ p <- ggplot(
 ) +
     geom_line(aes(x = x_actual, y = value, group = Sample), alpha = 0.2) +
     theme_publication() +
-    facet_wrap(.~batch,ncol = 1) +
+    facet_wrap(.~batch,ncol = 2) +
     xlab("Read position") +
     ylab("Mean PHRED score")
 ggsave(
     plot = p,
     filename = here("plots/KLGPG_221206/WGS_QC_read_qual.pdf"),
-    width = 2.5, height = 4.5
+    width = 3.5, height = 3.5
 )
