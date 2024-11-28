@@ -68,6 +68,9 @@ metadata_files <- map2(metadata_files, names(metadata_files), \(x, me) {
         mutate(PSN = str_replace(PSN, "Ü", "UE")) %>%
         mutate(PSN = str_replace(PSN, "NTXM", "NZMU")) %>%
         mutate(PSN = str_replace(PSN, "-0", "-")) %>%
+        mutate(PSN = ifelse(PSN == "JoeFr-NZMUue-5", "JoeFr-NZMU-5", PSN)) # Hard code this - I'm checking the metdata mapping later
+        mutate(PSN = ifelse(PSN == "SaOs-NZMUue-22", "SaOs-NZMU-22", PSN)) # Hard code this - I'm checking the metdata mapping later
+        mutate(PSN = ifelse(PSN == "DoJE-NZHD-57", "DoJe-NZHD-57", PSN)) # Hard code this - I'm checking the metdata mapping later
         mutate(batch = me)
     return(x)
 })
@@ -226,15 +229,15 @@ profiles <- profiles %>%
     unnest() %>%
     relocate(sampleID, motu_raw, relAb, relAbOrig, PSN, visit)
 
-pairwiseDistances <- pivot_wider(profiles, id_cols = genus, names_from = c(sampleID, batch), values_from = relAb, names_sep = "___") %>%
-    column_to_rownames("genus") %>%
+pairwiseDistances <- pivot_wider(profiles, id_cols = motu_raw, names_from = c(sampleID, batch), values_from = relAb, names_sep = "___") %>%
+    column_to_rownames("motu_raw") %>%
     as.data.frame() %>%
     as.matrix() %>%
     t() %>%
     vegdist(method = "euclidean", k = 2)
 
-pairwiseDistancesIdentityEuclidean <- pivot_wider(profiles, id_cols = genus, names_from = c(sampleID, batch), values_from = relAbOrig, names_sep = "___") %>%
-    column_to_rownames("genus") %>%
+pairwiseDistancesIdentityEuclidean <- pivot_wider(profiles, id_cols = motu_raw, names_from = c(sampleID, batch), values_from = relAbOrig, names_sep = "___") %>%
+    column_to_rownames("motu_raw") %>%
     as.data.frame() %>%
     as.matrix() %>%
     t() %>%
@@ -320,6 +323,7 @@ outcomeInformation <- outcomeInformation %>%
     mutate(ageCategorical = ifelse(age > 18, "adult", 'non-adult'))
 
 stopifnot(all(outcomeInformation$patientID %in% profiles$PSN))
+stopifnot(all(profiles$PSN %in% outcomeInformation$patientID))
 ## [1]v4_cyp_genotype =  ";\"\";1;\"CYP3A5(*3) Positive\";2;\"CYP3A5(*3) Negative\""
 ## [2]v64_cyp_genotype_2 = ";\"\";1;\"CYP3A4(*22) Positive\";2;\"CYP3A4(*22) Negative\""
 ### Update: Information in codebook is wrong. They are already coded as True/False
