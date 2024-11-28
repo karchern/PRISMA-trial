@@ -68,9 +68,10 @@ metadata_files <- map2(metadata_files, names(metadata_files), \(x, me) {
         mutate(PSN = str_replace(PSN, "Ü", "UE")) %>%
         mutate(PSN = str_replace(PSN, "NTXM", "NZMU")) %>%
         mutate(PSN = str_replace(PSN, "-0", "-")) %>%
-        mutate(PSN = ifelse(PSN == "JoeFr-NZMUue-5", "JoeFr-NZMU-5", PSN)) # Hard code this - I'm checking the metdata mapping later
-        mutate(PSN = ifelse(PSN == "SaOs-NZMUue-22", "SaOs-NZMU-22", PSN)) # Hard code this - I'm checking the metdata mapping later
-        mutate(PSN = ifelse(PSN == "DoJE-NZHD-57", "DoJe-NZHD-57", PSN)) # Hard code this - I'm checking the metdata mapping later
+        # Hard code this below - I'm having checks and balanced in place later on...
+        mutate(PSN = ifelse(PSN == "JoeFr-NZMUue-5", "JoeFr-NZMU-5", PSN)) %>% 
+        mutate(PSN = ifelse(PSN == "SaOs-NZMUue-22", "SaOs-NZMU-22", PSN)) %>%
+        mutate(PSN = ifelse(PSN == "DoJE-NZHD-57", "DoJe-NZHD-57", PSN)) %>%
         mutate(batch = me)
     return(x)
 })
@@ -324,20 +325,7 @@ outcomeInformation <- outcomeInformation %>%
 
 stopifnot(all(outcomeInformation$patientID %in% profiles$PSN))
 stopifnot(all(profiles$PSN %in% outcomeInformation$patientID))
-## [1]v4_cyp_genotype =  ";\"\";1;\"CYP3A5(*3) Positive\";2;\"CYP3A5(*3) Negative\""
-## [2]v64_cyp_genotype_2 = ";\"\";1;\"CYP3A4(*22) Positive\";2;\"CYP3A4(*22) Negative\""
-### Update: Information in codebook is wrong. They are already coded as True/False
-# cyp3a5star3 = case_when(
-#     cyp3a5star3 == 1 ~ "positive",
-#     cyp3a5star3 == 2 ~ "negative",
-#     .default = "unknown"
-# ),
-# cyp3a4star22 = case_when(
-#     cyp3a4star22 == 1 ~ "positive",
-#     cyp3a4star22 == 2 ~ "negative",
-#     .default = "unknown"
-# )
-# abxInfo <- read.table(here("data/16S_metadata/221030_PRISMA_antiinfectives_metadata_v2.csv', sep = ");", header =TRUE)
+
 abxInfo <- read.table(here('data/16S_metadata/antiinfectives_metadata.csv'), comment.char = "#", sep = ",", header = TRUE) %>%
     ########################################################################
     # IMPORTANT: I completely disregard Cotrimoxazol, Cefriaxon, Nystatin
