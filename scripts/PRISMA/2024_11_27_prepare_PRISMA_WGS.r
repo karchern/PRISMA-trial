@@ -778,6 +778,7 @@ dataList <- c(
     "pcoa", 
     "pcoaGenus",
     'pairwiseDistances', 
+    'pairwiseDistancesGenus',
     'pairwiseDistancesIdentityEuclidean', 
     "outcomeInformation", 
     "clinicalMetadata", 
