@@ -11,9 +11,11 @@ library(ggembl)
 # source('/home/karcher/utils/utils.r')
 source(here('scripts/utils.r'))
 
+taxonomy_annot <- "ncbi_motus"
+# taxonomy_annot <- "ncbi_mapseq"
+# taxonomy_annot <- "gtdb_idtaxa"
 
-obj_path <- here(str_c('objects/PRISMA_WGS.rdata'))
-
+obj_path <- here(str_c('objects/PRISMA_', taxonomy_annot, '.rdata'))
 
 print("Loading profiles...")
 
@@ -732,16 +734,35 @@ profiles <- cbind(profiles, tax_levels_prof) %>%
     relocate(kingdom, phylum, class, order, family, genus, species, motu)
 
 profiles_family <- profiles %>%
-    group_by(sampleID, PSN, visit, family) %>%
+    group_by(sampleID, PSN, visit, family, batch) %>%
     summarize(relAbOrig = sum(relAbOrig)) %>%
     mutate(relAb = log10(relAbOrig + pseudoCount)) %>%
     mutate(family = str_replace(family, "f__", ""))
 
 profiles_genus <- profiles %>%
-    group_by(sampleID, PSN, visit, genus) %>%
+    group_by(sampleID, PSN, visit, genus, batch) %>%
     summarize(relAbOrig = sum(relAbOrig)) %>%
     mutate(relAb = log10(relAbOrig + pseudoCount)) %>%
     mutate(genus = str_replace(genus, "g__", ""))
+
+pairwiseDistancesGenus <- pivot_wider(profiles_genus, id_cols = genus, names_from = c(sampleID, batch), values_from = relAb, names_sep = "___") %>%
+    column_to_rownames("genus") %>%
+    as.data.frame() %>%
+    as.matrix() %>%
+    t() %>%
+    vegdist(method = "euclidean", k = 2)
+
+set.seed(1)
+pcoaGenus <- cmdscale(pairwiseDistancesGenus) %>%
+    as.data.frame() %>%
+    rownames_to_column("tmp") %>%
+    mutate(sampleID = str_split_fixed(tmp, "___", n = 2)[, 1]) %>%
+    mutate(batch = str_split_fixed(tmp, "___", n = 2)[, 2]) %>%
+    select(-tmp) %>%
+    left_join(meta, by = c("sampleID", 'batch')) %>%
+    as_tibble() %>%
+    mutate(visit = as.character(visit)) %>%
+    mutate(visit = factor(visit, levels = 1:7))
 
 profiles_wgs <- profiles
 profiles_wgs_genus <- profiles_genus
@@ -755,6 +776,7 @@ dataList <- c(
     'profiles_wgs_family', 
     "profiles_wgs_genus", 
     "pcoa", 
+    "pcoaGenus",
     'pairwiseDistances', 
     'pairwiseDistancesIdentityEuclidean', 
     "outcomeInformation", 
