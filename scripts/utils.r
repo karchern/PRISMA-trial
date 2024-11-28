@@ -39,7 +39,7 @@ batch_colors <- c(
     modellingBatchB = "#A9DFBF")
 
 rarefactionDepth <- 1E4
-rarefactionDepthWGS <- 1E1
+rarefactionDepthWGS <- 1E3
 pseudoCount <- 1E-4
 
 load_data <- function(obj_path) {
