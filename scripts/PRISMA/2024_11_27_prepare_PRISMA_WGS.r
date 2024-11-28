@@ -104,24 +104,25 @@ profiles <- map2(names(profiles), profiles, \(batch_name, x) x %>%
     as.data.frame() %>% column_to_rownames('taxon') %>% as.matrix()
 
 meta <- do.call('rbind', metadata_files) %>%
-    rename(sampleID = Sample_ID)
+    rename(sampleID = Sample_ID) %>%
+    rename(visit = Visit)
 
 # god forgive me...
 
 profiles <- cbind(profiles, rownames(profiles))
 colnames(profiles)[dim(profiles)[2]] <- "motu_raw"
 profiles <- as.data.frame(profiles)
-profiles$mOTU_ID <- str_split_fixed(rownames(profiles), "_", n = 8)[, 8]
-profiles$species <- str_split_fixed(rownames(profiles), "_", n = 8)[, 7]
-profiles$genus <- str_split_fixed(rownames(profiles), "_", n = 8)[, 6]
-profiles$family <- str_split_fixed(rownames(profiles), "_", n = 8)[, 5]
+# profiles$mOTU_ID <- str_split_fixed(rownames(profiles), "_", n = 8)[, 8]
+# profiles$species <- str_split_fixed(rownames(profiles), "_", n = 8)[, 7]
+# profiles$genus <- str_split_fixed(rownames(profiles), "_", n = 8)[, 6]
+# profiles$family <- str_split_fixed(rownames(profiles), "_", n = 8)[, 5]
 
 profiles <- profiles %>%
     as.data.frame() %>%
     pivot_longer(
         -c(
             motu_raw
-        )) %>%
+            )) %>%
     mutate(sampleID = str_split_fixed(name, "___", n = 2)[, 1]) %>%
     mutate(batch = str_split_fixed(name, "___", n = 2)[, 2]) %>%
     group_by(
@@ -130,8 +131,7 @@ profiles <- profiles %>%
         batch) %>%
     mutate(value = as.numeric(value)) %>%
     summarize(count = sum(value)) %>%
-    inner_join(meta, by = c('sampleID', 'batch')) %>%
-    rename(visit = Visit)
+    inner_join(meta, by = c('sampleID', 'batch'))
 
 print("Computing depths...")
 depths <- profiles %>%
@@ -182,7 +182,7 @@ profiles <- profiles %>%
 print("Rarefying...")
 set.seed(112312)
 profiles <- profiles %>%
-    pivot_wider(id_cols = c(sampleID, batch), names_from = genus, values_from = count) %>%
+    pivot_wider(id_cols = c(sampleID, batch), names_from = motu_raw, values_from = count) %>%
     mutate(tmp = str_c(sampleID, batch, sep = "___")) %>%
     relocate(tmp) %>%
     column_to_rownames("tmp") %>%
@@ -194,31 +194,13 @@ profiles <- profiles %>%
     mutate(batch = str_split_fixed(tmp, "___", n = 2)[, 2]) %>%
     select(-tmp) %>%
     pivot_longer(-c(sampleID, batch)) %>%
-    rename(genus = name, count = value)
-
-profilesCountsWithUnresolved <- profiles
+    rename(motu_raw = name, count = value)
 
 profiles <- profiles %>%
     group_by(sampleID, batch) %>%
     mutate(relAb = count / sum(count)) %>%
     select(-count) %>%
-    filter(genus != "not_resolved") %>%
-    filter(genus != "-1") # Should never happen - but just in case :)
-
-print("Plotting boxplots of relative abundances annotated to genus level")
-cumRelAbToGenus <- profiles %>%
-    left_join(meta %>% select(visit, sampleID, batch), by = c("sampleID", "batch")) %>%
-    group_by(sampleID, batch, visit) %>%
-    summarize(sumRelAb = sum(relAb))
-
-cumRelAbToGenus_box <- ggplot(cumRelAbToGenus %>%
-    mutate(visit = factor(visit, levels = 1:7))) +
-    theme_classic() +
-    geom_boxplot(aes(x = visit, y = sumRelAb, fill = batch)) +
-    ylab("Fraction reads\nannotated to Genus-level") +
-    theme_classic()
-
-ggsave(plot = cumRelAbToGenus_box, filename = here("plots/KLGPG_221206/cumRelAbToGenus_boxplot.pdf"), width = 6, height = 3.5)
+    filter(motu_raw != "unassigned")
 
 print("Computing pairwise distances and PCOA object...")
 
@@ -242,7 +224,7 @@ profiles <- profiles %>%
     })) %>%
     unnest() %>%
     unnest() %>%
-    relocate(sampleID, genus, relAb, relAbOrig, PSN, visit)
+    relocate(sampleID, motu_raw, relAb, relAbOrig, PSN, visit)
 
 pairwiseDistances <- pivot_wider(profiles, id_cols = genus, names_from = c(sampleID, batch), values_from = relAb, names_sep = "___") %>%
     column_to_rownames("genus") %>%
