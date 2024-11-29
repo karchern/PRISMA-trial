@@ -561,40 +561,29 @@ get_model_performances <- function(
     model_data,
     model_feature_string = None,
     resamp_n_model = 1,
-    microbial_feature_selection_internal = TRUE,
-    top_microbial_features_if_microbial_feature_selection_internal = 10,
+    microbial_feature_selection_internal = NULL, # Either NULL or a vector of genera
+    genera_to_use = NULL, # This comes from the main scope, i.e. all genera considered sufficiently prevalent/abundant
     model_type = "RF"
     ) {
     model_feature_string_original <- model_feature_string
     rocObjectsAll <- list()
+    formula_printed <- FALSE
+    print("Running model performance evaluation")
+    print(str_c("Running ", model_type, " model with ", resamp_n_model, " resamples"))
     for (seed in 1:resamp_n_model) {
         print(str_c("Seed: ", seed))
         ps <- list()
         set.seed(seed)
         for (patientID in model_data$patientID) {
             model_feature_string <- model_feature_string_original
-            model_feature_string_non_microbial <- model_feature_string_original[!model_feature_string_original %in% candidateGenera]
+            model_feature_string_non_microbial <- model_feature_string_original[!model_feature_string_original %in% genera_to_use]
             test <- model_data[model_data$patientID == patientID, ]
             train <- model_data[model_data$patientID != patientID, ]
-            if (!is_logical(microbial_feature_selection_internal) || microbial_feature_selection_internal) {
-                all_microbial_features <- c(candidateGenera)
+            if (!is.null(microbial_feature_selection_internal)) {
+                all_microbial_features <- c(genera_to_use)
                 train_only_microbial <- train[, colnames(train) %in% all_microbial_features]
                 train_rest <- train[, !colnames(train) %in% all_microbial_features]
-                if (is.logical(microbial_feature_selection_internal)) {
-                    print("Running training-set internal feature slection")
-                    wilcox_test_results <- get_wilcox_results_for_internal_filtering(
-                        train_only_microbial,
-                        train$cdMetabolism)
-                    top_microbial_features <- enframe(wilcox_test_results) %>%
-                        rename(genus = name) %>%
-                        mutate(p_val = map_dbl(value, \(x) x$p.value)) %>%
-                        arrange(p_val) %>%
-                        head(top_microbial_features_if_microbial_feature_selection_internal) %>%
-                        select(genus)
-                } else {
-                    print("Taking predifined top features")
-                    top_microbial_features <- data.frame(genus = microbial_feature_selection_internal)
-                }
+                top_microbial_features <- data.frame(genus = microbial_feature_selection_internal)
                 # Caution: For testing only, since overfitting
                 # top_microbial_features <- data.frame(genus = c("Coprococcus"))
                 if (!all(top_microbial_features$genus %in% colnames(train_only_microbial))) {
@@ -606,7 +595,10 @@ get_model_performances <- function(
             }
 
             input_formula <- as.formula(str_c("cdMetabolism ~ ", str_c(model_feature_string, collapse = " + ")))
-            print(input_formula)
+            if (!formula_printed) {
+                print(input_formula)
+                formula_printed <- TRUE
+            }
             if (model_type == "RF") {
                 cdModel <- randomForest(formula = input_formula, data = train, proximity = TRUE)
             } else if (model_type == "logreg") {

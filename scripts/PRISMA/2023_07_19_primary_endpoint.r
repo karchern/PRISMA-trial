@@ -46,7 +46,8 @@ microbiome_confounders <- c(
     "v66c_renal_prior_type"
 )
 
-resamp_n_model <- 5
+# resamp_n_model <- 5
+resamp_n_model <- 1 # 1 for debugging,testing. 5 for production.
 
 model_type <- "RF"
 # model_type <- "logreg"
@@ -59,7 +60,6 @@ taxonomy_annot <- "ncbi_motus"
 # taxonomy_annot <- "gtdb_idtaxa"
 
 if (taxonomy_annot == "ncbi_mapseq") {
-    ### For NCBI
     candidate_taxa_for_prediction <- c(
         "Tyzzerella",
         "Anaerosporobacter",
@@ -67,31 +67,26 @@ if (taxonomy_annot == "ncbi_mapseq") {
         "Roseburia",
         "Dorea",
         "Faecalibacterium"
-        # "Lachnospiraceae"
-        # "Leuconostoc" # Super lowly abundant and heavily dependent on rarefaction seed...
     )
 } else if (taxonomy_annot == "gtdb_idtaxa") {
-    # For GTDB
     candidate_taxa_for_prediction <- c(
         "Dorea_A",
-        # "Coprobacter",
         "Bariatricus",
         "Roseburia",
         "Dorea"
     )
 } else if (taxonomy_annot == "ncbi_motus") {
     candidate_taxa_for_prediction <- c(
-    "Dorea",
-    "Parasutterella",
-    #"Erysipelotrichaceae gen. incertae sedis",
-    #"Lachnospiraceae gen. incertae sedis",
-    "Coprobacter",
-    #"Clostridiales gen. [Ruminococcus/Clostridium]",
-    "Ruminococcus_Clostridium",
-    "Anaerostipes",
-    "Sutterella",
-    "Ruminococcus_Eubacterium",
-    "Bilophila"
+        "ref_mOTU_v31_03702",
+        "ref_mOTU_v31_03674",
+        "ref_mOTU_v31_03668",
+        "ref_mOTU_v31_03667",
+        "ref_mOTU_v31_03570",
+        "ref_mOTU_v31_00719",
+        "ref_mOTU_v31_03690",
+        "ref_mOTU_v31_00856",
+        "ref_mOTU_v31_05137",
+        "ref_mOTU_v31_04300"
     )
 }
 
@@ -109,7 +104,10 @@ if (!taxonomy_annot %in% c("ncbi_mapseq", "gtdb_idtaxa", "ncbi_motus")) {
 obj_path <- here(str_c('objects/PRISMA_', taxonomy_annot, '.rdata'))
 load_data(obj_path)
 
-profiles <- profiles_wgs_genus
+profiles <- profiles_wgs %>%
+    mutate(genus = motu) #TODO: This needs to be fixed...
+importantTaxaGenus <- importantTaxaMotuRaw %>%
+    mutate(taxa = str_split_fixed(taxa, '[|]', n = 8)[, 8])
 profiles_family <- profiles_wgs_family
 
 preTransplantProfiles <- profiles %>%
@@ -394,7 +392,6 @@ p <- ggplot() +
 
 ggsave(plot = p, filename = here("plots/KLGPG_221206/glm_cd_cyp_tax_profiles_heatmap_single_covariate_adjusted.pdf"), width = 11, height = 4)
 
-
 resTibbleUnadjusted <- tibble(genus = names(resUnadjusted), models = resUnadjusted) %>%
     mutate(summary = map(models, summary)) %>%
     # mutate(cyp3a5star3_pvalue = map_dbl(summary, \(x) {
@@ -414,7 +411,8 @@ resTibbleUnadjusted <- tibble(genus = names(resUnadjusted), models = resUnadjust
     mutate(taxon_pvalue = as.numeric(taxon_pvalue)) %>%
     left_join(profiles_wgs %>% 
         ungroup() %>% 
-        select(genus, family, phylum) %>%
+        mutate(genus = motu) %>%
+        select(genus, family, phylum, species) %>%
         mutate(genus = str_replace(genus, "g__", "")) %>%
         mutate(family = str_replace(family, "f__", "")) %>%
         mutate(phylum = str_replace(phylum, "p__", "")) %>%
@@ -423,14 +421,17 @@ resTibbleUnadjusted <- tibble(genus = names(resUnadjusted), models = resUnadjust
         distinct() %>%
         identity()
         , by = c('genus' = 'genus')) %>%
-    relocate(genus, family, phylum) %>%
+    relocate(species, genus, family, phylum) %>%
     arrange(taxon_pvalue) %>%
     mutate(taxon_estimate = ifelse(taxon_estimate < -5, -5, taxon_estimate)) %>%
     mutate(taxon_estimate = ifelse(taxon_estimate > 5, 5, taxon_estimate)) %>%
     distinct(genus, .keep_all = TRUE) %>%
     arrange(taxon_pvalue)
 
-lab_unadjusted <- resTibbleUnadjusted %>% filter(taxon_pvalue < 0.1)
+resTibbleUnadjusted$taxon_pvalue_adjusted_BH <- p.adjust(resTibbleUnadjusted$taxon_pvalue, method = 'BH')
+
+#lab_unadjusted <- resTibbleUnadjusted %>% filter(taxon_pvalue < 0.1)
+
 pUnadjusted <- ggplot(data = resTibbleUnadjusted) +
     geom_vline(xintercept = 0, linetype = 'dotted') +
     geom_point(aes(x = taxon_estimate, y = -log10(taxon_pvalue)), alpha = 0.5) +
@@ -447,7 +448,7 @@ pUnadjusted <- ggplot(data = resTibbleUnadjusted) +
     NULL
 
 # ggsave(pAdjusted + pUnadjusted + scatter_plot + plot_layout(guides = 'collect'), filename = here("plots/KLGPG_221206/glm_cd_cyp_tax_profiles_volcano_plots.pdf"), width = 12, height = 5)
-ggsave(pUnadjusted + plot_layout(guides = 'collect'), filename = here("plots/KLGPG_221206/glm_cd_cyp_tax_profiles_volcano_plots.pdf"), width = 4.5, height = 4.5)
+ggsave(pUnadjusted + plot_layout(guides = 'collect'), filename = here("plots/KLGPG_221206/glm_cd_cyp_tax_profiles_volcano_plots.pdf"), width = 7, height = 7)
 
 tmp <- resTibbleUnadjusted %>%
     head(50) %>% 
@@ -456,10 +457,21 @@ tmp <- resTibbleUnadjusted %>%
     arrange(taxon_pvalue)
 tmp$genus <- factor(tmp$genus, levels = tmp$genus)
 
+truncate_string <- function(string, max_length = 50) {
+    if (nchar(string) > max_length) {
+        return(substr(string, 1, max_length))
+    } else {
+        return(string)
+    }
+}
+
 (ggplot(data = tmp, aes(x = genus, y = taxon_pvalue, fill = phylum)) +
 theme_presentation() +
 theme(axis.text.x = element_text(angle = 60, hjust = 1)) +
-geom_bar(stat = 'identity')) %>%
+geom_bar(stat = 'identity') +
+scale_x_discrete(labels = map_chr(tmp$species, truncate_string)) +
+NULL
+) %>%
 ggsave(filename = here("plots/KLGPG_221206/glm_cd_cyp_tax_profiles_phylum.pdf"), width = 12, height = 4.75)
 
 top_fam <- resTibbleUnadjusted %>%
@@ -481,8 +493,9 @@ resTibbleUnadjusted <- resTibbleUnadjusted %>%
     ggplot(aes(x = genus, y = taxon_pvalue, fill = top_family)) +
     theme_presentation() +
     theme(axis.text.x = element_text(angle = 60, hjust = 1)) +
+    scale_x_discrete(labels = map_chr(tmp$species, truncate_string)) +
     geom_bar(stat = 'identity')) %>%
-    ggsave(filename = here("plots/KLGPG_221206/glm_cd_cyp_tax_profiles_family.pdf"), width = 12, height = 3.5)
+    ggsave(filename = here("plots/KLGPG_221206/glm_cd_cyp_tax_profiles_family.pdf"), width = 12, height = 7)
 
 plots <- list()
 for (g in candidate_taxa_for_prediction) {
@@ -521,23 +534,7 @@ ggsave(plot = wrap_plots(plots, guides = 'collect', nrow = 3),
 cdModelDataSmall$firstAlbuminMeasurement[is.na(cdModelDataSmall$firstAlbuminMeasurement)] <- mean(cdModelDataSmall$firstAlbuminMeasurement[!is.na(cdModelDataSmall$firstAlbuminMeasurement)])
 cdModelDataSmall$weight[is.na(cdModelDataSmall$weight)] <- mean(cdModelDataSmall$weight[!is.na(cdModelDataSmall$weight)])
 
-# rocObjectModelSmallcyp3a5star3 <- get_model_performances(
-#     model_data = cdModelDataSmall,
-#     # model_feature_string = c("cyp3a5star3", "cyp3a4star22", "firstAlbuminMeasurement", "ageCategorical", "firstHematocritMeasurement", "sex", "weight"),
-#     model_feature_string = c("cyp3a5star3"),
-#     resamp_n_model = resamp_n_model,
-#     microbial_feature_selection_internal = FALSE,
-#     # model_type = "logreg")
-#     model_type = model_type)
 
-# rocObjectModelSmallcyp3a4star22 <- get_model_performances(
-#     model_data = cdModelDataSmall,
-#     # model_feature_string = c("cyp3a5star3", "cyp3a4star22", "firstAlbuminMeasurement", "ageCategorical", "firstHematocritMeasurement", "sex", "weight"),
-#     model_feature_string = c("cyp3a4star22"),
-#     resamp_n_model = resamp_n_model,
-#     microbial_feature_selection_internal = FALSE,
-#     # model_type = "logreg")
-#     model_type = model_type)
 
 vals_cyp3a5star3 <- compute_tpr_fpr_from_variable_and_ground_truths(
     ground_truths_boolean = cdModelDataSmall$cdMetabolism == 'high',
@@ -553,9 +550,10 @@ rocObjectModelSmallAll <- get_model_performances(
     model_feature_string = clinical_covars,
     # model_feature_string = c("cyp3a5star3", "cyp3a4star22"),
     resamp_n_model = resamp_n_model,
-    microbial_feature_selection_internal = FALSE,
+    microbial_feature_selection_internal = NULL,
     # model_type = "logreg")
-    model_type = model_type)
+    model_type = model_type
+    )
 
 cdModelDataBig <- cdModelDataSmall %>%
     inner_join(preTransplantProfiles %>%
@@ -570,25 +568,15 @@ cdModelDataBig <- cdModelDataSmall %>%
             inner_join(data.frame(family = candidate_taxa_for_prediction)) %>% pivot_wider(id_cols = patientID, names_from = family, values_from = relAb)
     )
 
-rocObjectModelBig <- get_model_performances(
-    model_data = cdModelDataBig,
-    model_feature_string = c("cyp3a5star3", candidateGenera),
-    resamp_n_model = resamp_n_model,
-    # microbial_feature_selection_internal = candidate_taxa_for_prediction,
-    # microbial_feature_selection_internal = TRUE,
-    microbial_feature_selection_internal = FALSE,
-    # model_type = "logreg")
-    model_type = model_type)
-
 rocObjectModelBigAll <- get_model_performances(
     model_data = cdModelDataBig,
     model_feature_string = c(clinical_covars, candidateGenera),
     resamp_n_model = resamp_n_model,
     # microbial_feature_selection_internal = candidate_taxa_for_prediction,
-    # microbial_feature_selection_internal = TRUE,
-    microbial_feature_selection_internal = FALSE,
+    microbial_feature_selection_internal = NULL,
     # model_type = "logreg")
-    model_type = model_type)
+    model_type = model_type,
+    genera_to_use = candidateGenera)
 
 cdModelDataOnlyTax <- cdModelDataSmall %>%
     inner_join(preTransplantProfiles %>%
@@ -608,18 +596,16 @@ rocObjectModelOnlyTaxAll <- get_model_performances(
     model_feature_string = candidateGenera,
     resamp_n_model = resamp_n_model,
     # microbial_feature_selection_internal = candidate_taxa_for_prediction,
-    # microbial_feature_selection_internal = TRUE,
-    microbial_feature_selection_internal = FALSE,
+    microbial_feature_selection_internal = NULL,
     # model_type = "logreg")
-    model_type = model_type)
+    model_type = model_type,
+    genera_to_use = candidateGenera)
 
 cdModels <- tibble(
     resamp = 1:resamp_n_model,
-    # small_roc = map(rocObjectModelSmall, \(x) x[[1]]),
-    # big_roc = map(rocObjectModelBig, \(x) x[[1]]),
-    big_all_roc = map(rocObjectModelBigAll, \(x) x[[1]]),
-    small_all_roc = map(rocObjectModelSmallAll, \(x) x[[1]]),
-    onlytax_roc = map(rocObjectModelOnlyTaxAll, \(x) x[[1]])
+    cm_and_microbiome_roc = map(rocObjectModelBigAll, \(x) x[[1]]),
+    clinical_model_roc = map(rocObjectModelSmallAll, \(x) x[[1]]),
+    microbiome_roc = map(rocObjectModelOnlyTaxAll, \(x) x[[1]])
 ) %>%
     pivot_longer(-resamp) %>%
     rename(model_type = name, roc = value) %>%
@@ -628,15 +614,11 @@ cdModels <- tibble(
     })) %>%
     mutate(auc = map_dbl(roc, \(x) x$auc)) %>%
     mutate(group = case_when(
-        # model_type == "small_roc" ~ "cyp genotype",
-        model_type == "small_all_roc" ~ "clinical model",
-        # model_type == "big_roc" ~ "cyp + microbiome",
-        model_type == "big_all_roc" ~ "CM + microbiome",
-        model_type == "onlytax_roc" ~ "microbiome"
+        model_type == "clinical_model_roc" ~ "clinical model",
+        model_type == "cm_and_microbiome_roc" ~ "CM + microbiome",
+        model_type == "microbiome_roc" ~ "microbiome"
     )) %>%
     mutate(group = factor(group, levels = rev(c(
-        #' cyp genotype',
-        # "cyp + microbiome",
         'CM + microbiome',
         'clinical model',
         "microbiome")), ordered = TRUE)) %>%
@@ -648,7 +630,6 @@ cdModels <- tibble(
     mutate(y = seq(0.15, 0.025, length.out = length(levels(Features)))) %>%
     unnest() %>%
     identity()
-
 
 # colVec <- # Define colors
 grey_color <- "#888888" # Grey
@@ -665,63 +646,6 @@ navy_color <- "#2C3E50" # Navy
 # Display the colors
 colors <- c(blue_color, red_color, green_color, purple_color, orange_color)
 names(colors) <- c(levels(cdModels$Features), "cyp3a5star3", "cyp3a4star22")
-
-pClinical <- ggplot() +
-    geom_line(data = cdModels %>%
-        select(resamp, Features, specs) %>%
-        unnest() %>%
-        filter(Features == 'cyp genotype'), aes(x = FPR, y = TPR, group = interaction(Features, resamp), color = Features), alpha = 1) +
-    theme_presentation() +
-    scale_color_manual(values = colors) +
-    xlab("False Positive Rate") +
-    ylab("True Positive Rate") +
-    geom_text(data = cdModels %>%
-        filter(Features == 'cyp genotype') %>%
-        group_by(Features) %>%
-        summarize(label = round(median(auc), 3), y = y[1]), aes(x = 0.275, y = y, label = str_c(Features, ": ", label)), inherit.aes = FALSE, hjust = 0) +
-    NULL
-
-ggsave(
-    plot = pClinical,
-    filename = here(str_c("plots/KLGPG_221206/cdMetabolismPredictionOnlyClinical", model_type, ".pdf")), width = 5, height = 3.25)
-
-pC <- ggplot() +
-    geom_line(data = cdModels %>%
-        select(resamp, Features, specs) %>%
-        unnest() %>%
-        filter(Features == 'cyp + microbiome'), aes(x = FPR, y = TPR, group = interaction(Features, resamp), color = Features), alpha = 1) +
-    theme_presentation() +
-    scale_color_manual(values = colors) +
-    xlab("False Positive Rate") +
-    ylab("True Positive Rate") +
-    geom_text(data = cdModels %>%
-        filter(Features == 'cyp + microbiome') %>%
-        group_by(Features) %>%
-        summarize(label = round(median(auc), 3), y = y[1]), aes(x = 0.275, y = y, label = str_c(Features, ": ", label)), inherit.aes = FALSE, hjust = 0) +
-    NULL
-
-ggsave(
-    plot = pC,
-    filename = here(str_c("plots/KLGPG_221206/cdMetabolismPredictionClinicalPlusMicrobiome", model_type, ".pdf")), width = 5, height = 3.25)
-
-pC <- ggplot() +
-    geom_line(data = cdModels %>%
-        select(resamp, Features, specs) %>%
-        unnest() %>%
-        filter(Features == "microbiome"), aes(x = FPR, y = TPR, group = interaction(Features, resamp), color = Features), alpha = 1) +
-    theme_presentation() +
-    scale_color_manual(values = colors) +
-    xlab("False Positive Rate") +
-    ylab("True Positive Rate") +
-    geom_text(data = cdModels %>%
-        filter(Features == "microbiome") %>%
-        group_by(Features) %>%
-        summarize(label = round(median(auc), 3), y = y[1]), aes(x = 0.275, y = y, label = str_c(Features, ": ", label)), inherit.aes = FALSE, hjust = 0) +
-    NULL
-
-ggsave(
-    plot = pC,
-    filename = here(str_c("plots/KLGPG_221206/cdMetabolismPredictionClinicalOnlyMicrobiome", model_type, ".pdf")), width = 5, height = 3.25)
 
 pAll <- ggplot() +
     geom_line(data = cdModels %>%
