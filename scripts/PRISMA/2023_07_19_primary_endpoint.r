@@ -534,7 +534,23 @@ ggsave(plot = wrap_plots(plots, guides = 'collect', nrow = 3),
 cdModelDataSmall$firstAlbuminMeasurement[is.na(cdModelDataSmall$firstAlbuminMeasurement)] <- mean(cdModelDataSmall$firstAlbuminMeasurement[!is.na(cdModelDataSmall$firstAlbuminMeasurement)])
 cdModelDataSmall$weight[is.na(cdModelDataSmall$weight)] <- mean(cdModelDataSmall$weight[!is.na(cdModelDataSmall$weight)])
 
+# rocObjectModelSmallcyp3a5star3 <- get_model_performances(
+#     model_data = cdModelDataSmall,
+#     # model_feature_string = c("cyp3a5star3", "cyp3a4star22", "firstAlbuminMeasurement", "ageCategorical", "firstHematocritMeasurement", "sex", "weight"),
+#     model_feature_string = c("cyp3a5star3"),
+#     resamp_n_model = resamp_n_model,
+#     microbial_feature_selection_internal = FALSE,
+#     # model_type = "logreg")
+#     model_type = model_type)
 
+# rocObjectModelSmallcyp3a4star22 <- get_model_performances(
+#     model_data = cdModelDataSmall,
+#     # model_feature_string = c("cyp3a5star3", "cyp3a4star22", "firstAlbuminMeasurement", "ageCategorical", "firstHematocritMeasurement", "sex", "weight"),
+#     model_feature_string = c("cyp3a4star22"),
+#     resamp_n_model = resamp_n_model,
+#     microbial_feature_selection_internal = FALSE,
+#     # model_type = "logreg")
+#     model_type = model_type)
 
 vals_cyp3a5star3 <- compute_tpr_fpr_from_variable_and_ground_truths(
     ground_truths_boolean = cdModelDataSmall$cdMetabolism == 'high',
