@@ -113,7 +113,7 @@ if (tax_and_profiler_choice == "ncbi_mapseq") {
     profiles_family <- profiles_wgs_family
 }
 
-preTransplantProfiles <- profiles %>%
+microbiomePredictiveProfile <- profiles %>%
     mutate(genus = str_replace_all(genus, "-", "_")) %>%
     inner_join(data.frame(visit = c(1, 2)), by = 'visit') %>%
     group_by(PSN) %>%
@@ -128,7 +128,7 @@ preTransplantProfiles <- profiles %>%
     unnest(data) %>%
     inner_join(importantTaxaGenus %>% rename(genus = taxa), by = 'genus')
 
-# preTransplantProfilesFamily <- profiles_family %>%
+# microbiomePredictiveProfileFamily <- profiles_family %>%
 #     inner_join(data.frame(visit = c(1, 2)), by = 'visit') %>%
 #     group_by(PSN) %>%
 #     nest() %>%
@@ -141,7 +141,7 @@ preTransplantProfiles <- profiles %>%
 #     })) %>%
 #     unnest(data) 
 
-abundant_and_prevalent_taxa <- unique(c(unique(preTransplantProfiles$genus)))
+abundant_and_prevalent_taxa <- unique(c(unique(microbiomePredictiveProfile$genus)))
 abundant_and_prevalent_taxa <- abundant_and_prevalent_taxa[!str_detect(abundant_and_prevalent_taxa, "\\[")]
 clinical_covars <- c("cyp3a5star3", "firstAlbuminMeasurement", "ageCategorical", "firstHematocritMeasurement", "sex", "weight")
 
@@ -280,10 +280,10 @@ res <- list()
 resUnadjusted <- list()
 resAdjusted <- list()
 print("Getting single-variable assocations...")
-for (g in unique(preTransplantProfiles$genus)) {
+for (g in unique(microbiomePredictiveProfile$genus)) {
     
     cdModelData <- cdModelDataSmall %>%
-        left_join(preTransplantProfiles %>%
+        left_join(microbiomePredictiveProfile %>%
             filter(genus == g) %>%
             select(genus, relAb, PSN) %>%
             rename(patientID = PSN),
@@ -518,13 +518,13 @@ rocObjectModelSmallAll <- get_model_performances(
     )
 
 cdModelDataBig <- cdModelDataSmall %>%
-    inner_join(preTransplantProfiles %>%
+    inner_join(microbiomePredictiveProfile %>%
         filter(genus %in% abundant_and_prevalent_taxa) %>%
         select(genus, relAb, PSN) %>%
         rename(patientID = PSN) %>%
         pivot_wider(id_cols = patientID, names_from = genus, values_from = relAb)) %>%
     # left_join(
-    #     preTransplantProfilesFamily %>%
+    #     microbiomePredictiveProfileFamily %>%
     #         select(family, relAb, PSN) %>%
     #         rename(patientID = PSN) %>%
     #         inner_join(data.frame(family = candidate_taxa_for_prediction)) %>% pivot_wider(id_cols = patientID, names_from = family, values_from = relAb)
@@ -540,13 +540,13 @@ rocObjectModelBigAll <- get_model_performances(
     taxa_to_use = abundant_and_prevalent_taxa)
 
 cdModelDataOnlyTax <- cdModelDataSmall %>%
-    inner_join(preTransplantProfiles %>%
+    inner_join(microbiomePredictiveProfile %>%
         filter(genus %in% abundant_and_prevalent_taxa) %>%
         select(genus, relAb, PSN) %>%
         rename(patientID = PSN) %>%
         pivot_wider(id_cols = patientID, names_from = genus, values_from = relAb)) %>%
     # left_join(
-    #     preTransplantProfilesFamily %>%
+    #     microbiomePredictiveProfileFamily %>%
     #         select(family, relAb, PSN) %>%
     #         rename(patientID = PSN) %>%
     #         inner_join(data.frame(family = candidate_taxa_for_prediction)) %>% pivot_wider(id_cols = patientID, names_from = family, values_from = relAb)
