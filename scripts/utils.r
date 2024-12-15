@@ -308,7 +308,7 @@ get_quantile_plot <- function(inputData, axisColumn, labelColumn, valueColumn, p
         group_by(label) %>%
         nest() %>%
         mutate(data = map(data, function(x) return(x %>% arrange(quantile)))) %>%
-        unnest() %>%
+        unnest(data) %>%
         # arrange(quantile) %>%
         ungroup() %>%
         pull(Quantiles)
@@ -562,7 +562,7 @@ get_model_performances <- function(
     model_feature_string = None,
     resamp_n_model = 1,
     microbial_feature_selection_internal = NULL, # Either NULL or a vector of genera
-    genera_to_use = NULL, # This comes from the main scope, i.e. all genera considered sufficiently prevalent/abundant
+    taxa_to_use = NULL, # This comes from the main scope, i.e. all genera considered sufficiently prevalent/abundant
     model_type = "RF"
     ) {
     model_feature_string_original <- model_feature_string
@@ -576,11 +576,11 @@ get_model_performances <- function(
         set.seed(seed)
         for (patientID in model_data$patientID) {
             model_feature_string <- model_feature_string_original
-            model_feature_string_non_microbial <- model_feature_string_original[!model_feature_string_original %in% genera_to_use]
+            model_feature_string_non_microbial <- model_feature_string_original[!model_feature_string_original %in% taxa_to_use]
             test <- model_data[model_data$patientID == patientID, ]
             train <- model_data[model_data$patientID != patientID, ]
             if (!is.null(microbial_feature_selection_internal)) {
-                all_microbial_features <- c(genera_to_use)
+                all_microbial_features <- c(taxa_to_use)
                 train_only_microbial <- train[, colnames(train) %in% all_microbial_features]
                 train_rest <- train[, !colnames(train) %in% all_microbial_features]
                 top_microbial_features <- data.frame(genus = microbial_feature_selection_internal)
