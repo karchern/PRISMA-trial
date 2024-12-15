@@ -17,12 +17,17 @@ library(ggrepel)
 source(here('scripts/utils.r'))
 
 # This is the (range of) timepoints of which the microbiome samples (the oldest one) are used to predict the primary endpoint
-microbiome_prediction_timepoint_selection <- c(1,2)
+# If you set this to c(1,2), you'll use the pre-transplant sample (the oldest one) to predict the primary endpoint (defined immediatly below)
+microbiome_prediction_timepoint_selection <- c(1, 2)
 
-# This is the (range of) timepoint of which the microbiome samples (the oldest one) are used to predict the primary endpoint
+# This is the (range of) timepoint which are used to select the sample who's CD-ratio should be taken
 cd_timepoint_selection_low <- 5
 cd_timepoint_selection_high <- 5
-allowDifference <- 1
+if (cd_timepoint_selection_low != cd_timepoint_selection_high) {
+    exit("cd_timepoint_selection_low and cd_timepoint_selection_high need to be identical")
+} 
+allowDifference <- 0
+
 
 microbiome_confounders <- c(
     "weight",
@@ -374,7 +379,7 @@ p <- ggplot() +
     scale_fill_viridis_c() +
     theme(axis.text.x = element_text(angle = 45, hjust = 1))
 
-ggsave(plot = p, filename = here("plots/KLGPG_221206/glm_cd_cyp_tax_profiles_heatmap_single_covariate_adjusted.pdf"), width = 11, height = 4)
+ggsave(plot = p, filename = here(str_c("plots/KLGPG_221206/glm_cd_cyp_tax_profiles_heatmap_single_covariate_adjusted__microbiomeTP_", str_c(microbiome_prediction_timepoint_selection, collapse = ","), "__CD_TP",cd_timepoint_selection_high,".pdf")), width = 11, height = 4)
 
 resTibbleUnadjusted <- tibble(genus = names(resUnadjusted), models = resUnadjusted) %>%
     mutate(summary = map(models, summary)) %>%
@@ -423,7 +428,7 @@ pUnadjusted <- ggplot(data = resTibbleUnadjusted) +
     ggtitle("UNADJUSTED log. regression model\n predicting CD metabolism\nfrom baseline information") +
     NULL
 
-ggsave(pUnadjusted + plot_layout(guides = 'collect'), filename = here("plots/KLGPG_221206/glm_cd_cyp_tax_profiles_volcano_plots.pdf"), width = 7, height = 7)
+ggsave(pUnadjusted + plot_layout(guides = 'collect'), filename = here(str_c("plots/KLGPG_221206/glm_cd_cyp_tax_profiles_volcano_plots__microbiomeTP_",str_c(microbiome_prediction_timepoint_selection, collapse = ","), "__CD_TP",cd_timepoint_selection_high, ".pdf")), width = 7, height = 7)
 
 tmp <- resTibbleUnadjusted %>%
     head(50) %>% 
@@ -462,7 +467,7 @@ geom_bar(stat = 'identity') +
 theme(
     plot.margin = unit(c(1, 1, 1, 2), "cm")
 )) %>%
-ggsave(filename = here("plots/KLGPG_221206/glm_cd_cyp_tax_profiles_phylum.pdf"), width = 12, height = 4.75)
+ggsave(filename = here(str_c("plots/KLGPG_221206/glm_cd_cyp_tax_profiles_phylum__microbiomeTP_", str_c(microbiome_prediction_timepoint_selection, collapse = ","), "__CD_TP",cd_timepoint_selection_high,".pdf")), width = 12, height = 4.75)
 
 plots <- list()
 for (g in candidate_taxa_for_prediction) {
@@ -477,7 +482,7 @@ for (g in candidate_taxa_for_prediction) {
 }
 
 ggsave(plot = wrap_plots(plots, guides = 'collect', nrow = 3),
-    filename = here("plots/KLGPG_221206/cd_metabolism_hits.pdf"), width = 6.25, height = 6)
+    filename = here(str_c("plots/KLGPG_221206/cd_metabolism_hits__microbiomeTP_", str_c(microbiome_prediction_timepoint_selection, collapse = ","), "__CD_TP",cd_timepoint_selection_high,".pdf")), width = 6.25, height = 6)
 
 plots <- list()
 for (g in candidate_taxa_for_prediction) {
@@ -492,7 +497,7 @@ for (g in candidate_taxa_for_prediction) {
 }
 
 ggsave(plot = wrap_plots(plots, guides = 'collect', nrow = 3),
-    filename = here("plots/KLGPG_221206/cd_metabolism_hits_by_batch.pdf"), width = 8, height = 5)
+    filename = here(str_c("plots/KLGPG_221206/cd_metabolism_hits_by_batch__microbiomeTP_", str_c(microbiome_prediction_timepoint_selection, collapse = ","), "__CD_TP",cd_timepoint_selection_high,".pdf")), width = 8, height = 5)
 
 ###############################################################################
 ##  train RF models to predict CD bracket based on clinical meta + microbiome
@@ -628,4 +633,4 @@ pAll <- ggplot() +
 
 ggsave(
     plot = pAll,
-    filename = here(str_c("plots/KLGPG_221206/cdMetabolismPrediction", model_type, ".pdf")), width = 5, height = 3.25)
+    filename = here(str_c("plots/KLGPG_221206/cdMetabolismPrediction", model_type, "__microbiomeTP_", str_c(microbiome_prediction_timepoint_selection, collapse = ","), "__CD_TP",cd_timepoint_selection_high, ".pdf")), width = 5, height = 3.25)
