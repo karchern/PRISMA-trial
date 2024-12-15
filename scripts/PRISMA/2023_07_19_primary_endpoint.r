@@ -16,6 +16,14 @@ library(ggrepel)
 # source('/home/karcher/utils/utils.r')
 source(here('scripts/utils.r'))
 
+# This is the (range of) timepoints of which the microbiome samples (the oldest one) are used to predict the primary endpoint
+microbiome_prediction_timepoint_selection <- c(1,2)
+
+# This is the (range of) timepoint of which the microbiome samples (the oldest one) are used to predict the primary endpoint
+cd_timepoint_selection_low <- 5
+cd_timepoint_selection_high <- 5
+allowDifference <- 1
+
 microbiome_confounders <- c(
     "weight",
     "sex",
@@ -115,15 +123,12 @@ if (tax_and_profiler_choice == "ncbi_mapseq") {
 
 microbiomePredictiveProfile <- profiles %>%
     mutate(genus = str_replace_all(genus, "-", "_")) %>%
-    inner_join(data.frame(visit = c(1, 2)), by = 'visit') %>%
+    inner_join(data.frame(visit = microbiome_prediction_timepoint_selection), by = 'visit') %>%
     group_by(PSN) %>%
     nest() %>%
     mutate(data = map(data, \(x) {
-        if (1 %in% x$visit) {
-            return(x %>% filter(visit == 1))
-        } else {
-            return(x %>% filter(visit == 2))
-        }
+        vi <- min(x$visit)
+        return(x %>% filter(visit == vi))
     })) %>%
     unnest(data) %>%
     inner_join(importantTaxaGenus %>% rename(genus = taxa), by = 'genus')
@@ -149,16 +154,12 @@ clinical_covars <- c("cyp3a5star3", "firstAlbuminMeasurement", "ageCategorical",
 #### Primary endpoint prediction: Predict CD at baseline from microbiome ####
 ##############################################################################
 
-tpFilterLow <- 5
-tpFilterHigh <- 5
-allowDifference <- 1
-
 flipper <- list(
     low = "high",
     high = "low"
 )
 
-if (abs(tpFilterHigh - tpFilterLow) <= 1) {
+if (abs(cd_timepoint_selection_high - cd_timepoint_selection_low) <= 1) {
     print("Setting allowDifference variable to 0...")
     allowDifference <- 0
 }
@@ -168,8 +169,8 @@ data <- outcomeInformation %>%
     group_by(patientID) %>%
     filter(!is.na(CD)) %>%
     arrange(visit) %>%
-    filter(visit >= tpFilterLow) %>%
-    filter(visit <= tpFilterHigh) %>%
+    filter(visit >= cd_timepoint_selection_low) %>%
+    filter(visit <= cd_timepoint_selection_high) %>%
     mutate(visit = factor(visit, levels = 4:7)) %>%
     nest() %>%
     mutate(`cdMetabolism` = map_chr(data, \(x) {
@@ -194,7 +195,7 @@ p <- ggplot(data = data
     geom_hline(yintercept = 1, linetype = 'dotted') +
     geom_boxplot(outlier.color = NA) +
     {
-        if (abs(tpFilterHigh - tpFilterLow) <= 1) {
+        if (abs(cd_timepoint_selection_high - cd_timepoint_selection_low) <= 1) {
             geom_jitter(aes(color = `cdMetabolism`), width = 0.05, height = 0, alpha = 0.3)
         } else {
             geom_jitter(, width = 0.05, height = 0, alpha = 0.3)
