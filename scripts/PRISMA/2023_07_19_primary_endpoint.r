@@ -128,18 +128,18 @@ preTransplantProfiles <- profiles %>%
     unnest(data) %>%
     inner_join(importantTaxaGenus %>% rename(genus = taxa), by = 'genus')
 
-preTransplantProfilesFamily <- profiles_family %>%
-    inner_join(data.frame(visit = c(1, 2)), by = 'visit') %>%
-    group_by(PSN) %>%
-    nest() %>%
-    mutate(data = map(data, \(x) {
-        if (1 %in% x$visit) {
-            return(x %>% filter(visit == 1))
-        } else {
-            return(x %>% filter(visit == 2))
-        }
-    })) %>%
-    unnest(data) 
+# preTransplantProfilesFamily <- profiles_family %>%
+#     inner_join(data.frame(visit = c(1, 2)), by = 'visit') %>%
+#     group_by(PSN) %>%
+#     nest() %>%
+#     mutate(data = map(data, \(x) {
+#         if (1 %in% x$visit) {
+#             return(x %>% filter(visit == 1))
+#         } else {
+#             return(x %>% filter(visit == 2))
+#         }
+#     })) %>%
+#     unnest(data) 
 
 abundant_and_prevalent_taxa <- unique(c(unique(preTransplantProfiles$genus)))
 abundant_and_prevalent_taxa <- abundant_and_prevalent_taxa[!str_detect(abundant_and_prevalent_taxa, "\\[")]
@@ -474,20 +474,6 @@ for (g in candidate_taxa_for_prediction) {
     }
     plots[[length(plots) + 1]] <- illustrate_taxon_hit(do.call('rbind', modelDataAll), g, meta, by_batch = FALSE) + ggtitle(g_title) + theme(plot.title = element_text(size = 8, face = "bold"))
 }
-for (g in c("Lachnospiraceae")) {
-    if(tax_and_profiler_choice == "ncbi_motus") {
-        g_title <- motus_species_map$species[motus_species_map$motu == g][1]
-        g_title <- truncate_string(g_title)
-        g_title <- str_replace(g_title, "s__", "")
-    } else {
-        g_title <- g
-    }    
-    plots[[length(plots) + 1]] <- illustrate_taxon_hit(cdModelDataSmall %>%
-        left_join(preTransplantProfilesFamily %>%
-            filter(family == g) %>%
-            select(family, relAb, PSN) %>%
-            rename(patientID = PSN), by = 'patientID'), g, meta, by_batch = FALSE, tax_level = "family") + ggtitle(g_title) + theme(plot.title = element_text(size = 8, face = "bold"))
-}
 
 ggsave(plot = wrap_plots(plots, guides = 'collect', nrow = 3),
     filename = here("plots/KLGPG_221206/cd_metabolism_hits.pdf"), width = 6.25, height = 6)
@@ -502,20 +488,6 @@ for (g in candidate_taxa_for_prediction) {
         g_title <- g
     }    
     plots[[length(plots) + 1]] <- illustrate_taxon_hit(do.call('rbind', modelDataAll), g, meta, by_batch = TRUE) + ggtitle(g_title) + theme(plot.title = element_text(size = 8, face = "bold"))
-}
-for (g in c("Lachnospiraceae")) {
-    if(tax_and_profiler_choice == "ncbi_motus") {
-        g_title <- motus_species_map$species[motus_species_map$motu == g][1]
-        g_title <- truncate_string(g_title)
-        g_title <- str_replace(g_title, "s__", "")
-    } else {
-        g_title <- g
-    }    
-    plots[[length(plots) + 1]] <- illustrate_taxon_hit(cdModelDataSmall %>%
-        left_join(preTransplantProfilesFamily %>%
-            filter(family == g) %>%
-            select(family, relAb, PSN) %>%
-            rename(patientID = PSN), by = 'patientID'), g, meta, tax_level = "family", by_batch = TRUE) + ggtitle(g_title) + theme(plot.title = element_text(size = 8, face = "bold"))
 }
 
 ggsave(plot = wrap_plots(plots, guides = 'collect', nrow = 3),
