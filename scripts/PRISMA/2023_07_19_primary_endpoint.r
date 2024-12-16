@@ -18,9 +18,12 @@ source(here('scripts/utils.r'))
 
 # This is the (range of) timepoints of which the microbiome samples (the oldest one) are used to predict the primary endpoint
 # If you set this to c(1,2), you'll use the pre-transplant sample (the oldest one) to predict the primary endpoint (defined immediatly below)
-microbiome_prediction_timepoint_selection <- c(1, 2)
+# This has to be either 2 (or more) distinct numbers, or one number.
+microbiome_prediction_timepoint_selection <- c(1,2)
+#microbiome_prediction_timepoint_selection <- c(7)
 
-# This is the (range of) timepoint which are used to select the sample who's CD-ratio should be taken
+# This is the (range of) timepoint which are used to select the sample who's CD-ratio should be taken.
+# If you set this to 5, you'll use the 5th timepoint to predict the primary endpoint (defined immediatly below) as was donee up until end of 2024
 cd_timepoint_selection_low <- 5
 cd_timepoint_selection_high <- 5
 if (cd_timepoint_selection_low != cd_timepoint_selection_high) {
@@ -59,8 +62,8 @@ microbiome_confounders <- c(
     "v66c_renal_prior_type"
 )
 
-# resamp_n_model <- 5
-resamp_n_model <- 1 # 1 for debugging,testing. 5 for production.
+resamp_n_model <- 5
+# resamp_n_model <- 1 # 1 for debugging,testing. 5 for production.
 
 model_type <- "RF"
 # model_type <- "logreg"
