@@ -40,7 +40,6 @@ profiles <- map2(list('modellingBatchA', 'modellingBatchB', 'interim'), list(pro
     pivot_wider(id_cols = c(taxon), names_from = c(sampleID, batch), values_from = count, values_fill = 0, names_sep = "___") %>%
     as.data.frame() %>% column_to_rownames('taxon') %>% as.matrix()
 
-
 batch_info <- read_tsv(here("data/16S_metadata/221227_PRISMA_16S_modelling_cohort_Batch_A_and_Batch_B_overview.tsv"), show_col_types = FALSE) %>%
     rename(sampleID = Sample_ID) %>%
     mutate(batch = case_when(
@@ -48,7 +47,13 @@ batch_info <- read_tsv(here("data/16S_metadata/221227_PRISMA_16S_modelling_cohor
         `Sequencing Batch for 16S miSeq` == "B" ~ "modellingBatchB",
         .default = NA
     )) %>%   
-    select(sampleID, batch)
+    select(sampleID, batch) %>%
+    rbind(
+            read_tsv(here("data/16S_metadata/221227_PRISMA_16S_Overview.tsv"), show_col_types = FALSE) %>%
+                select(Sample_ID) %>%
+                rename(sampleID = Sample_ID) %>%
+                mutate(batch = 'interim')
+        )
 meta <- read_tsv(here('data/genecore_meta.tsv')) %>%
     select(PSN, Visit, Sample_ID) %>%
     rename(sampleID = Sample_ID, visit = Visit)
