@@ -11,8 +11,8 @@ library(ggembl)
 # source('/home/karcher/utils/utils.r')
 source(here('scripts/utils.r'))
 
-taxonomy_annot <- "ncbi_mapseq"
-# taxonomy_annot <- "gtdb_idtaxa"
+# taxonomy_annot <- "ncbi_mapseq"
+taxonomy_annot <- "gtdb_idtaxa"
 
 if (!taxonomy_annot %in% c("ncbi_mapseq", "gtdb_idtaxa")) {
     stop("Unknown taxonomy annotation")
@@ -49,6 +49,11 @@ batch_info <- read_tsv(here("data/16S_metadata/221227_PRISMA_16S_modelling_cohor
         .default = NA
     )) %>%   
     select(sampleID, batch)
+meta <- read_tsv(here('data/genecore_meta.tsv')) %>%
+    select(PSN, Visit, Sample_ID) %>%
+    rename(sampleID = Sample_ID, visit = Visit)
+meta <- meta %>%
+    inner_join(batch_info)
 
 
 # fullTax <- read_tsv(here("data/MAPseq_AlessioCurated.tax"), col_names = F, show_col_types = FALSE)
