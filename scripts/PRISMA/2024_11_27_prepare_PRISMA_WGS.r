@@ -60,44 +60,19 @@ metadata_files <- map(names(profiles), \(x) {
 names(metadata_files) <- names(profiles)
 metadata_files <- map2(metadata_files, names(metadata_files), \(x, me) {
     x <- x %>%
-        mutate(PSN = str_replace(PSN, "Mue", "M")) %>%
-        mutate(PSN = str_replace(PSN, "MÜ", "M")) %>%
-        mutate(PSN = str_replace(PSN, "ä", "ae")) %>%
-        mutate(PSN = str_replace(PSN, "ö", "oe")) %>%
-        mutate(PSN = str_replace(PSN, "ü", "ue")) %>%
-        mutate(PSN = str_replace(PSN, "Ä", "AE")) %>%
-        mutate(PSN = str_replace(PSN, "Ö", "OE")) %>%
-        mutate(PSN = str_replace(PSN, "Ü", "UE")) %>%
-        mutate(PSN = str_replace(PSN, "NTXM", "NZMU")) %>%
-        mutate(PSN = str_replace(PSN, "-0", "-")) %>%
-        # Hard code this below - I'm having checks and balanced in place later on...
-        mutate(PSN = ifelse(PSN == "JoeFr-NZMUue-5", "JoeFr-NZMU-5", PSN)) %>% 
-        mutate(PSN = ifelse(PSN == "SaOs-NZMUue-22", "SaOs-NZMU-22", PSN)) %>%
-        mutate(PSN = ifelse(PSN == "DoJE-NZHD-57", "DoJe-NZHD-57", PSN)) %>%
-        mutate(batch = me)
+        mutate(batch = me) %>%
+        select(Sample_ID, batch)
     return(x)
 })
 
-for (batch in c(
-    "interim_Batch1",
-    "interim_Batch2",
-    "interim_Batch3",
-    "interim_Batch4",
-    "interim_Batch5")) {
-        metadata_files[[batch]] <- metadata_files[[batch]] %>%
-            mutate(Visit = as.numeric(str_replace(SampleName, ".*_Visit_", ""))) %>%
-            select(-SampleName, -ID) %>%
-            relocate(PSN, Visit, Sample_ID)
-    }
+batch_info <- do.call('rbind', metadata_files) %>%
+    rename(sampleID = Sample_ID) 
 
-map(metadata_files, \(x) head(colnames(x)))
-
-## Some sanity checks
-pmap(list(profiles, metadata_files, names(metadata_files)), \(x, y, na) {
-    print(na)
-    print(colnames(x) %in% y$Sample_ID)
-    print((y$Sample_ID %in% colnames(x)))
-})
+meta <- read_tsv(here('data/genecore_meta.tsv')) %>%
+    select(PSN, Visit, Sample_ID) %>%
+    rename(sampleID = Sample_ID, visit = Visit)
+meta <- meta %>%
+    inner_join(batch_info)
 
 profiles <- map2(names(profiles), profiles, \(batch_name, x) x %>%
     as.data.frame() %>%
@@ -109,19 +84,9 @@ profiles <- map2(names(profiles), profiles, \(batch_name, x) x %>%
     pivot_wider(id_cols = c(taxon), names_from = c(sampleID, batch), values_from = count, values_fill = 0, names_sep = "___") %>%
     as.data.frame() %>% column_to_rownames('taxon') %>% as.matrix()
 
-meta <- do.call('rbind', metadata_files) %>%
-    rename(sampleID = Sample_ID) %>%
-    rename(visit = Visit)
-
-# god forgive me...
-
 profiles <- cbind(profiles, rownames(profiles))
 colnames(profiles)[dim(profiles)[2]] <- "motu_raw"
 profiles <- as.data.frame(profiles)
-# profiles$mOTU_ID <- str_split_fixed(rownames(profiles), "_", n = 8)[, 8]
-# profiles$species <- str_split_fixed(rownames(profiles), "_", n = 8)[, 7]
-# profiles$genus <- str_split_fixed(rownames(profiles), "_", n = 8)[, 6]
-# profiles$family <- str_split_fixed(rownames(profiles), "_", n = 8)[, 5]
 
 profiles <- profiles %>%
     as.data.frame() %>%
