@@ -40,32 +40,17 @@ profiles <- map2(list('modellingBatchA', 'modellingBatchB', 'interim'), list(pro
     pivot_wider(id_cols = c(taxon), names_from = c(sampleID, batch), values_from = count, values_fill = 0, names_sep = "___") %>%
     as.data.frame() %>% column_to_rownames('taxon') %>% as.matrix()
 
-# meta <- read_tsv(here("data/16S_metadata/221227_PRISMA_16S_Overview.tsv")) %>%
-meta <- read_tsv(here("data/16S_metadata/221227_PRISMA_16S_modelling_cohort_Batch_A_and_Batch_B_overview.tsv"), show_col_types = FALSE) %>%
-    select(PSN, Visit, ID, Sample_ID, `Sequencing Batch for 16S miSeq`) %>%
+
+batch_info <- read_tsv(here("data/16S_metadata/221227_PRISMA_16S_modelling_cohort_Batch_A_and_Batch_B_overview.tsv"), show_col_types = FALSE) %>%
+    rename(sampleID = Sample_ID) %>%
     mutate(batch = case_when(
         `Sequencing Batch for 16S miSeq` == "A" ~ "modellingBatchA",
         `Sequencing Batch for 16S miSeq` == "B" ~ "modellingBatchB",
         .default = NA
-    )) %>%
-    select(-`Sequencing Batch for 16S miSeq`) %>%
-    rbind(read_tsv(here("data/16S_metadata/221227_PRISMA_16S_Overview.tsv"), show_col_types = FALSE) %>%
-        select(PSN, Visit, ID, Sample_ID) %>%
-        mutate(batch = "interim")) %>%
-    rename(sampleID = Sample_ID, visit = Visit) %>%
-    mutate(PSN = str_replace(PSN, "Mue", "M")) %>%
-    mutate(PSN = str_replace(PSN, "MÜ", "M")) %>%
-    mutate(PSN = str_replace(PSN, "ä", "ae")) %>%
-    mutate(PSN = str_replace(PSN, "ö", "oe")) %>%
-    mutate(PSN = str_replace(PSN, "ü", "ue")) %>%
-    mutate(PSN = str_replace(PSN, "Ä", "AE")) %>%
-    mutate(PSN = str_replace(PSN, "Ö", "OE")) %>%
-    mutate(PSN = str_replace(PSN, "Ü", "UE")) %>%
-    mutate(PSN = str_replace(PSN, "NTXM", "NZMU")) %>%
-    mutate(PSN = str_replace(PSN, "-0", "-"))
-# Remove funny colnames with encoding
-meta <- meta[, !str_detect(colnames(meta), "Conc")]
-meta <- meta[, !str_detect(colnames(meta), "10 ng")]
+    )) %>%   
+    select(sampleID, batch)
+
+
 # fullTax <- read_tsv(here("data/MAPseq_AlessioCurated.tax"), col_names = F, show_col_types = FALSE)
 # fullTax <- read_tsv(here('data/gtdbk_tax_r207.tab'), col_names = F, show_col_types = FALSE)
 fullTax <- read_tsv(here(str_c("data/", taxonomy_annot, ".tax")), col_names = F, show_col_types = FALSE)
