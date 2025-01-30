@@ -271,20 +271,21 @@ pcoa <- cmdscale(pairwiseDistances) %>%
 
 print("Preparing clinical metadata...")
 set.seed(2)
-outcomeInformationInterim <- clean_patient_clinical_metadata(read_csv('/g/scb/zeller/karcher/PRISMA/data/16S_metadata/221024_PRISMA_clinical_metadata_names_fixed_ACTUALLY_NEVERMIND_JUST_DO_IT_YOURSELF.csv')) %>%
-    filter(!is.na(v62_visit_number) & !is.na(v61_visit_date))
-outcomeInformation <- clean_patient_clinical_metadata(read_csv('/g/scb/zeller/karcher/PRISMA/data/16S_metadata/221024_PRISMA_clinical_metadata_BatchA_BatchB.csv') %>%
-    mutate(v65_pat_id = ifelse(v65_pat_id == "jobe-nzmu-08", "jobl-nzmu-08", v65_pat_id)) %>%
-    # Some patients might have weird, mostly emptry entries. According to maral this can go.
-    filter(!is.na(v62_visit_number) & !is.na(v61_visit_date)) %>%
-    # This shit is only for RoVo, who has 2 metadata entries for visit 6 and I cannot be fucked this shit anymore
-    group_by(v65_pat_id, v62_visit_number) %>%
-    sample_n(1) %>%
-    ungroup(), how = 'from_maral') %>%
-    # the metadata file contains the metadata for the entire modelling cohort, not just the new batches. so this
-    anti_join(outcomeInformationInterim %>% select(v65_pat_id) %>% distinct()) %>%
-    mutate(v13_dob = as.Date(v13_dob))
-outcomeInformation <- rbind(outcomeInformation, outcomeInformationInterim)
+# outcomeInformationInterim <- clean_patient_clinical_metadata(read_csv('/g/scb/zeller/karcher/PRISMA/data/16S_metadata/221024_PRISMA_clinical_metadata_names_fixed_ACTUALLY_NEVERMIND_JUST_DO_IT_YOURSELF.csv')) %>%
+#     filter(!is.na(v62_visit_number) & !is.na(v61_visit_date))
+# outcomeInformation <- clean_patient_clinical_metadata(read_csv('/g/scb/zeller/karcher/PRISMA/data/16S_metadata/221024_PRISMA_clinical_metadata_BatchA_BatchB.csv') %>%
+#     mutate(v65_pat_id = ifelse(v65_pat_id == "jobe-nzmu-08", "jobl-nzmu-08", v65_pat_id)) %>%
+    # # Some patients might have weird, mostly emptry entries. According to maral this can go.
+    # filter(!is.na(v62_visit_number) & !is.na(v61_visit_date)) %>%
+    # # This shit is only for RoVo, who has 2 metadata entries for visit 6 and I cannot be fucked this shit anymore
+    # group_by(v65_pat_id, v62_visit_number) %>%
+    # sample_n(1) %>%
+    # ungroup(), how = 'from_maral') %>%
+    # # the metadata file contains the metadata for the entire modelling cohort, not just the new batches. so this
+    # anti_join(outcomeInformationInterim %>% select(v65_pat_id) %>% distinct()) %>%
+    # mutate(v13_dob = as.Date(v13_dob))
+
+outcomeInformation <- read_csv(here('data/df_modelling_cohort_new.csv'))
 clinMetCode <- read_tsv('/g/scb/zeller/karcher/PRISMA/data/16S_metadata/231024_PRISMA_clinical_metadata_codebook.tsv')
 
 # this is the tibble containing
