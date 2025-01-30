@@ -13,6 +13,15 @@ library(randomForest)
 library(pROC)
 library(ggrepel)
 
+truncate_string <- function(string, max_length = 50) {
+    # if (nchar(string) > max_length) {
+    #     return(substr(string, 1, max_length))
+    # } else {
+    #     return(string)
+    # }
+    return(str_replace(str_c(str_split(string, " ")[[1]][1:2], collapse = " "), "s__", ""))
+}
+
 # source('/home/karcher/utils/utils.r')
 source(here('scripts/utils.r'))
 
@@ -423,8 +432,16 @@ pUnadjusted <- ggplot(data = resTibbleUnadjusted) +
     geom_point(aes(x = taxon_estimate, y = -log10(taxon_pvalue)), alpha = 0.5) +
     geom_text_repel(data = resTibbleUnadjusted %>%
         arrange(taxon_pvalue) %>%
-        head(10)
-    , aes(x = taxon_estimate, y = -log10(taxon_pvalue), label = genus), max.overlaps = Inf) +
+        head(10) %>%
+    {
+        if(tax_and_profiler_choice == "ncbi_motus") {
+            (.) %>% left_join(motus_species_map, by = c('genus' = 'motu'))
+        } else {
+            (.)
+        }
+    } %>%
+    mutate(species = map_chr(species, truncate_string))
+    , aes(x = taxon_estimate, y = -log10(taxon_pvalue), label = species), max.overlaps = Inf) +
     theme_presentation() +
     xlab("Effect size [odds ratio]") +
     ylab("-log10(p-value)") +
@@ -446,15 +463,6 @@ tmp <- resTibbleUnadjusted %>%
         }
     }
 tmp$genus <- factor(tmp$genus, levels = tmp$genus)
-
-truncate_string <- function(string, max_length = 50) {
-    # if (nchar(string) > max_length) {
-    #     return(substr(string, 1, max_length))
-    # } else {
-    #     return(string)
-    # }
-    return(str_replace(str_c(str_split(string, " ")[[1]][1:2], collapse = " "), "s__", ""))
-}
 
 (ggplot(data = tmp, aes(x = genus, y = taxon_pvalue, fill = phylum)) +
 theme_presentation() +
