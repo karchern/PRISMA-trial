@@ -329,8 +329,8 @@ outcomeInformation <- outcomeInformation %>%
     ) %>%
     rename(all_of(model_covariates)) %>%
     mutate(birthday = as.Date(birthday)) %>%
-    #mutate(age = age_calc(birthday, as.Date("2023-11-07"), "years")) %>%
-    #mutate(ageCategorical = ifelse(age > 18, "adult", 'non-adult'))
+    mutate(age = age_calc(birthday, as.Date("2023-11-07"), "years")) %>%
+    mutate(ageCategorical = ifelse(age > 18, "adult", 'non-adult'))
 
 stopifnot(all(outcomeInformation$patientID %in% profiles$PSN))
 ## [1]v4_cyp_genotype =  ";\"\";1;\"CYP3A5(*3) Positive\";2;\"CYP3A5(*3) Negative\""
