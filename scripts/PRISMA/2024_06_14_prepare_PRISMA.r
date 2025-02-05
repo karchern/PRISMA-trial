@@ -285,7 +285,7 @@ set.seed(2)
     # anti_join(outcomeInformationInterim %>% select(v65_pat_id) %>% distinct()) %>%
     # mutate(v13_dob = as.Date(v13_dob))
 
-outcomeInformation <- read_csv(here('data/df_modelling_cohort_new.csv'))
+outcomeInformation <- read_tsv(here('data/df_modelling_cohort_250202.tsv'))
 clinMetCode <- read_tsv('/g/scb/zeller/karcher/PRISMA/data/16S_metadata/231024_PRISMA_clinical_metadata_codebook.tsv')
 
 # this is the tibble containing
@@ -328,7 +328,7 @@ outcomeInformation <- outcomeInformation %>%
         # cyp3a4star22 = v64_CYP3A4_22,
     ) %>%
     rename(all_of(model_covariates)) %>%
-    mutate(birthday = as.Date(birthday)) %>%
+    #mutate(birthday = as.Date(birthday)) %>%
     mutate(age = age_calc(birthday, as.Date("2023-11-07"), "years")) %>%
     mutate(ageCategorical = ifelse(age > 18, "adult", 'non-adult'))
 
