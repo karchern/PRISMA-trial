@@ -82,6 +82,18 @@ meta <- read_excel('/g/scb/zeller/karcher/PRISMA/data/16S_metadata/220310_K3NHW/
         
 profiles <- readRDS('/g/scb/zeller/karcher/PRISMA/profiles/16S/220310_K3NHW/res_mapseq.rds')
 colnames(profiles) <- str_replace(colnames(profiles), ".*_lane1", "")
+all_tax_strings <- rownames(profiles) %>% unique()
+all_tax_strings <- str_split_fixed(all_tax_strings, "\\|", 8)
+genus_order_map <- all_tax_strings %>% 
+    as_tibble() %>% 
+    distinct() %>% 
+    filter(!V6 == "") %>% 
+    select(-V7, -V8) %>% 
+    distinct() %>%
+    mutate(V4 = str_replace(V4, "o__", "")) %>%
+    mutate(V6 = str_replace(V6, "g__", "")) %>%
+    select(V4, V6) %>%
+    rename(order = V4, genus = V6)
 profilesGenus <- .f_resolve_taxonomy(profiles, "genus")
 profilesGenusLong <- profilesGenus %>%
     as.data.frame() %>%
@@ -248,25 +260,179 @@ overnight_culture_scatters <- profilesGenusLongFinal %>%
     }))
 
 
-p <- overnight_culture_scatters %>%
+data <- overnight_culture_scatters %>%
     select(originalCommunity, oxygen_condition, data) %>%
     unnest() %>%
-    ggplot(aes(x = glycerol_stock + pseudoCount, y = overnight_culture + pseudoCount)) +
-    geom_point(alpha = 0.3) +
+    # mutate(outlier = (
+    #     glycerol_stock/overnight_culture > 10 | 
+    #     glycerol_stock/overnight_culture < 0.1 ) 
+    #     & (
+    #         glycerol_stock > 0.005 | overnight_culture > 0.005
+    #     )) %>%
+    #     #left_join(genus_order_map)
+    #     group_by(genus, outlier) %>%
+    #     #nest() %>%
+    #     mutate(outlier = outlier & n() >= 3) %>%
+    mutate(recalcitrant = (
+        glycerol_stock/overnight_culture > 10) 
+        & (
+            glycerol_stock > 0.005 | overnight_culture > 0.005
+        )) %>%
+    mutate(enriched = (
+        glycerol_stock/overnight_culture < 0.1) 
+        & (
+            glycerol_stock > 0.005 | overnight_culture > 0.005
+        )) %>%        
+        #left_join(genus_order_map)
+        group_by(genus, recalcitrant) %>%
+        #nest() %>%
+        mutate(recalcitrant = recalcitrant & n() >= 3) %>%        
+        group_by(genus, enriched) %>%
+        #nest() %>%
+        mutate(enriched = enriched & n() >= 3) %>%                
+        ungroup()
+
+## BROKEN
+# library(ggunileg)
+# p <- ggplot() +
+#     geom_point(
+#         data = data %>% filter(!recalcitrant & !enriched),
+#         aes(x = glycerol_stock + pseudoCount, y = overnight_culture + pseudoCount),
+#         alpha = 0.7) +
+#     geom_point(
+#         data = data %>% filter(recalcitrant),
+#         aes(x = glycerol_stock + pseudoCount, y = overnight_culture + pseudoCount, color = genus, shape = genus),
+#         alpha = 0.7) +
+#     geom_point(
+#         data = data %>% filter(enriched),
+#         aes(x = glycerol_stock + pseudoCount, y = overnight_culture + pseudoCount, color = genus, shape = genus),
+#         alpha = 0.7) +        
+#     scale_color_highres(
+#         num_shape_level = 3
+#     ) +
+#     scale_x_continuous(trans = 'log10') +
+#     scale_y_continuous(trans = 'log10') +
+#     theme_classic() +
+#     facet_wrap(originalCommunity ~ oxygen_condition) +
+#     xlab("Glycerol stock") +
+#     ylab("Overnight culture") +
+#     theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+#     geom_text(data = overnight_culture_scatters, aes(x = 5E-4, y = 0.5, label = round(pearsonCor, 3)), inherit.aes = FALSE) +
+#     #annotate("text", x = -3, y = -1, label = round(pc, 3)) +
+#     #ggtitle(str_c(o, ox, sep = ","))
+#     NULL
+
+#ggsave(plot = wrap_plots(overnight_culture_scatters$plots, nrow = 5), filename = "/g/scb/zeller/karcher/PRISMA/plots/220310_K3NHW/overnight_culture_scatters.pdf", width = 10, height = 8.25)
+#ggsave(plot = p, filename = "/g/scb/zeller/karcher/PRISMA/plots/220310_K3NHW/overnight_culture_scatters_per_donor.pdf", width = 9.25, height = 10.5)
+
+library(ggunileg)
+p <- ggplot() +
+    geom_point(
+        data = data %>% filter(!recalcitrant & !enriched),
+        aes(x = glycerol_stock + pseudoCount, y = overnight_culture + pseudoCount),
+        alpha = 0.3) +
+    geom_point(
+        data = data %>% filter(recalcitrant) %>% rename(`genus (recalcitrant)` = genus),
+        aes(x = glycerol_stock + pseudoCount, y = overnight_culture + pseudoCount, color = `genus (recalcitrant)`, shape = `genus (recalcitrant)`),
+        alpha = 0.7) +
+    guides(color = guide_legend(ncol = 3)) +
+    scale_color_highres(
+        num_shape_level = 3
+    ) +        
+    ggnewscale::new_scale_color() +
+    ggnewscale::new_scale('shape') +
+    geom_point(
+        data = data %>% filter(enriched) %>% rename(`genus (enriched)` = genus),
+        aes(x = glycerol_stock + pseudoCount, y = overnight_culture + pseudoCount, color = `genus (enriched)`, shape = `genus (enriched)`),
+        alpha = 0.7) +        
+    guides(color = guide_legend(ncol = 3)) +
+    scale_color_highres(
+        num_shape_level = 3
+    ) +
     scale_x_continuous(trans = 'log10') +
     scale_y_continuous(trans = 'log10') +
     theme_classic() +
-    facet_wrap(originalCommunity ~ oxygen_condition) +
+    facet_wrap(. ~ oxygen_condition) +
     xlab("Glycerol stock") +
     ylab("Overnight culture") +
     theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
-    geom_text(data = overnight_culture_scatters, aes(x = 5E-4, y = 0.5, label = round(pearsonCor, 3)), inherit.aes = FALSE) +
+    #geom_text(data = overnight_culture_scatters, aes(x = 5E-4, y = 0.5, label = round(pearsonCor, 3)), inherit.aes = FALSE) +
     #annotate("text", x = -3, y = -1, label = round(pc, 3)) +
+    geom_text(
+        data = data %>%
+            group_by(
+                oxygen_condition
+            ) %>%
+            summarize(
+                pc = round(cor(log10(glycerol_stock + pseudoCount), log10(overnight_culture + pseudoCount), method = 'pearson'), 3)
+            ),
+            aes(x = 5E-4, y = 0.5, label = pc)
+    ) +
     #ggtitle(str_c(o, ox, sep = ","))
     NULL
 
 #ggsave(plot = wrap_plots(overnight_culture_scatters$plots, nrow = 5), filename = "/g/scb/zeller/karcher/PRISMA/plots/220310_K3NHW/overnight_culture_scatters.pdf", width = 10, height = 8.25)
-ggsave(plot = p, filename = "/g/scb/zeller/karcher/PRISMA/plots/220310_K3NHW/overnight_culture_scatters.pdf", width = 9.25, height = 10.5)
+ggsave(plot = p, filename = "/g/scb/zeller/karcher/PRISMA/plots/220310_K3NHW/overnight_culture_scatters.pdf", width = 10.5, height = 3.5)
+
+data <- overnight_culture_scatters %>%
+    select(originalCommunity, oxygen_condition, data) %>%
+    unnest() %>%
+    select(originalCommunity, oxygen_condition, genus, overnight_culture) %>%
+    pivot_wider(
+        id_cols = c(originalCommunity, genus),
+        names_from = oxygen_condition,
+        values_from = overnight_culture
+    ) %>%
+    mutate(AA = ifelse(is.na(AA), 0, AA)) %>%
+    mutate(MA = ifelse(is.na(MA), 0, MA)) %>%
+    mutate(outlier = (
+        AA/MA > 3 | 
+        AA/MA < (1/3) ) 
+        & (
+            AA > 0.005 | MA > 0.005
+        )) %>%
+        #left_join(genus_order_map)
+        group_by(genus, outlier) %>%
+        #nest() %>%
+        mutate(outlier = outlier & n() > 5) %>%
+        ungroup()
+    
+    
+p <- ggplot() +
+    geom_point(
+        data = data %>% filter(!outlier),
+        aes(x = AA + pseudoCount, y = MA + pseudoCount),
+        alpha = 0.15) +
+    geom_point(
+        data = data %>% filter(outlier),
+        aes(x = AA + pseudoCount, y = MA + pseudoCount, color = genus, shape = genus),
+        alpha = 0.8) +
+    scale_color_highres(
+        num_shape_level = 3
+    ) +
+    scale_x_continuous(trans = 'log10') +
+    scale_y_continuous(trans = 'log10') +
+    theme_classic() +
+    #facet_wrap(. ~ oxygen_condition) +
+    xlab("Overnight culture (Anaerobic)") +
+    ylab("Overnight culture (Microaerobic)") +
+    theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+    #geom_text(data = overnight_culture_scatters, aes(x = 5E-4, y = 0.5, label = round(pearsonCor, 3)), inherit.aes = FALSE) +
+    #annotate("text", x = -3, y = -1, label = round(pc, 3)) +
+    geom_text(
+        data = data %>%
+            summarize(
+                pc = round(cor(log10(AA + pseudoCount), log10(MA + pseudoCount), method = 'pearson'), 3)
+            ),
+            aes(x = 5E-4, y = 0.5, label = pc)
+    ) +
+    #ggtitle(str_c(o, ox, sep = ","))
+    NULL
+
+#ggsave(plot = wrap_plots(overnight_culture_scatters$plots, nrow = 5), filename = "/g/scb/zeller/karcher/PRISMA/plots/220310_K3NHW/overnight_culture_scatters.pdf", width = 10, height = 8.25)
+#ggsave(plot = p, filename = "/g/scb/zeller/karcher/PRISMA/plots/220310_K3NHW/overnight_culture_scatters_MA_VS_AA.pdf", width = 5.0, height = 3.5)
+
+
 
 drug_incubation_scatters <- profilesGenusLongFinal %>%
     filter(sampleType %in% c('drug_plate_10', "glycerol_stock")) %>%
