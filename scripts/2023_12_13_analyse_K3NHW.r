@@ -374,6 +374,97 @@ p <- ggplot() +
 #ggsave(plot = wrap_plots(overnight_culture_scatters$plots, nrow = 5), filename = "/g/scb/zeller/karcher/PRISMA/plots/220310_K3NHW/overnight_culture_scatters.pdf", width = 10, height = 8.25)
 ggsave(plot = p, filename = "/g/scb/zeller/karcher/PRISMA/plots/220310_K3NHW/overnight_culture_scatters.pdf", width = 10.5, height = 3.5)
 
+sampleID_donorID_map <- read.delim(text = "sampleID	ExpID	stoolDonor
+MB001	1	A-01
+MB002	2	A-02
+MB003	3	A-03
+MB005	4	A-04
+MB010	5	A-05
+MB006	6	A-06
+MB007	7	A-07
+MB008	8	A-08
+MB009	9	A-09
+MB021	21	A-10
+MB015	15	P-01
+MB016	16	P-02
+MB017	17	P-03
+MB018	18	P-04
+MB013	13	T-01
+MB014	14	T-02
+MB019	19	T-03
+MB020	20	T-04
+MB011	22	T-05", sep = "\t") %>%
+    as_tibble() %>%
+    select(sampleID, stoolDonor)
+
+donorID_type_map <- read.delim(text = "Community ID	Donor age (years)	Donor Sex (m/f)	Stool consistency (bristol stool chart)	Description
+A-01	43	f	6	Healthy adult stool donor
+A-02	27	m	5	Healthy adult stool donor
+A-03	36	m	4	Healthy adult stool donor
+A-04	30	m	4	Healthy adult stool donor
+A-05	42	m	6	Healthy adult stool donor
+A-06	45	m	4	Healthy adult stool donor
+A-07	31	m	6	Healthy adult stool donor
+A-08	29	f	2	Healthy adult stool donor
+A-09	34	m	6	Healthy adult stool donor
+A-10	30	f	5	Healthy adult stool donor
+P-01	3	f	2	Healthy pediatric stool donor
+P-02	12	m	4	Healthy pediatric stool donor
+P-03	7	f	4	Healthy pediatric stool donor
+P-04	6	f	5	Healthy pediatric stool donor
+T-01	20	f	4	Adult kidney transplanted stool donor
+T-02	20	m	6	Adult kidney transplanted stool donor
+T-03	18	m	5	Adult kidney transplanted stool donor
+T-04	20	m	6	Adult kidney transplanted stool donor
+T-05	23	m	3	Adult kidney transplanted stool donor", sep = "\t") %>%
+    as_tibble() %>%
+    rename(
+        stoolDonor = `Community.ID`,
+        type = Description
+    ) %>%
+    select(stoolDonor, type)
+
+met <- full_join(
+    sampleID_donorID_map,
+    donorID_type_map,
+    by = "stoolDonor"
+) %>%
+    mutate(type = case_when(
+        type == "Healthy adult stool donor" ~ "Healthy adults",
+        type == "Healthy pediatric stool donor" ~ "Healthy children",
+        type == "Adult kidney transplanted stool donor" ~ "Transplant patients",
+    ))
+
+library(ggunileg)
+p <- ggplot() +
+    geom_abline(intercept = 0, slope = 1, linetype = "dashed", color = "black") +
+    geom_point(data = data %>%
+    left_join(met, by = c("originalCommunity" = "sampleID")), aes(x = glycerol_stock + pseudoCount, y = overnight_culture + pseudoCount), alpha = 0.3) +    scale_x_continuous(trans = 'log10') +
+    scale_y_continuous(trans = 'log10') +
+    theme_presentation() +
+    facet_grid(type ~ oxygen_condition) +
+    xlab("Glycerol stock") +
+    ylab("Overnight culture") +
+    theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+    #geom_text(data = overnight_culture_scatters, aes(x = 5E-4, y = 0.5, label = round(pearsonCor, 3)), inherit.aes = FALSE) +
+    #annotate("text", x = -3, y = -1, label = round(pc, 3)) +
+    geom_text(
+        data = data %>%
+            left_join(met, by = c("originalCommunity" = "sampleID")) %>%
+            group_by(
+                type, oxygen_condition
+            ) %>%
+            summarize(
+                pc = round(cor(log10(glycerol_stock + pseudoCount), log10(overnight_culture + pseudoCount), method = 'pearson'), 3)
+            ),
+            aes(x = 5E-4, y = 0.5, label = pc)
+    ) +
+    NULL
+
+#ggsave(plot = wrap_plots(overnight_culture_scatters$plots, nrow = 5), filename = "/g/scb/zeller/karcher/PRISMA/plots/220310_K3NHW/overnight_culture_scatters.pdf", width = 10, height = 8.25)
+ggsave(plot = p, filename = "/g/scb/zeller/karcher/PRISMA/plots/220310_K3NHW/overnight_culture_scatters_v2.pdf", width = 5.5, height = 6.5)
+
+
 data <- overnight_culture_scatters %>%
     select(originalCommunity, oxygen_condition, data) %>%
     unnest() %>%
@@ -485,6 +576,8 @@ p <- drug_incubation_scatters %>%
 
 #ggsave(plot = wrap_plots(drug_incubation_scatters$plots, nrow = 2) + plot_layout(guides = 'collect'), filename = "/g/scb/zeller/karcher/PRISMA/plots/220310_K3NHW/drug_incubation_scatters.pdf", width = 5.75, height = 4)
 ggsave(plot = p, filename = "/g/scb/zeller/karcher/PRISMA/plots/220310_K3NHW/drug_incubation_scatters.pdf", width = 5.75, height = 4)
+
+
 
 dmso_vs_glycerol <- profilesGenusLongFinal %>%
     filter(sampleType %in% c('drug_plate_10', "glycerol_stock")) %>%
