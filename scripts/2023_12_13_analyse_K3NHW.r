@@ -8,7 +8,7 @@ library(ggembl)
 # Just some convenience functions that I've gotten used to
 source('/home/karcher/utils/utils.r')
 
-ssDepth <- 10000
+ssDepth <- 2500
 pseudoCount <- 1/ssDepth
 
 .f_resolve_taxonomy <- function(collated_mat, taxLevel = "genus") {
@@ -150,7 +150,8 @@ profilesGenusLong <- profilesGenusLong %>%
 
 # I'm removing MB019, MB020 from this experiment since glycerol stock sequencing failed, and hence we have nothing to compare to.MB019
 profilesGenusLong <- profilesGenusLong %>%
-    anti_join(data.frame(originalCommunity = c("MB019", "MB020")))
+   #anti_join(data.frame(originalCommunity = c("MB019", "MB020")))
+   anti_join(data.frame(originalCommunity = c("MB020")))
 
 # rarefy
 set.seed(1)
