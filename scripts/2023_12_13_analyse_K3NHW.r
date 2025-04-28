@@ -3,6 +3,7 @@ library(readxl)
 library(ggsignif)
 library(vegan)
 library(patchwork)
+library(ggembl)
 
 # Just some convenience functions that I've gotten used to
 source('/home/karcher/utils/utils.r')
@@ -374,6 +375,7 @@ p <- ggplot() +
 #ggsave(plot = wrap_plots(overnight_culture_scatters$plots, nrow = 5), filename = "/g/scb/zeller/karcher/PRISMA/plots/220310_K3NHW/overnight_culture_scatters.pdf", width = 10, height = 8.25)
 ggsave(plot = p, filename = "/g/scb/zeller/karcher/PRISMA/plots/220310_K3NHW/overnight_culture_scatters.pdf", width = 10.5, height = 3.5)
 
+
 sampleID_donorID_map <- read.delim(text = "sampleID	ExpID	stoolDonor
 MB001	1	A-01
 MB002	2	A-02
@@ -463,6 +465,61 @@ p <- ggplot() +
 
 #ggsave(plot = wrap_plots(overnight_culture_scatters$plots, nrow = 5), filename = "/g/scb/zeller/karcher/PRISMA/plots/220310_K3NHW/overnight_culture_scatters.pdf", width = 10, height = 8.25)
 ggsave(plot = p, filename = "/g/scb/zeller/karcher/PRISMA/plots/220310_K3NHW/overnight_culture_scatters_v2.pdf", width = 5.5, height = 6.5)
+
+# Same as above but now an ordination of all samples
+# and the overnight culture samples are colored by their glycerol stock
+data_glycerol <- data %>%
+    select(originalCommunity, genus, glycerol_stock) %>%
+    ungroup() %>%
+    distinct() %>%
+    mutate(r = str_c(originalCommunity, "NA", sep = "___")) %>%
+    pivot_wider(id_cols = r, names_from = genus, values_from = glycerol_stock, values_fill = 0) %>%
+    pivot_longer(- r) %>%
+    mutate(r = str_c(r, "___glycerol_stock"))
+
+data_overnight <- data %>%
+    mutate(r = str_c(originalCommunity, oxygen_condition, sep = "___")) %>%
+    pivot_wider(id_cols = r, names_from = genus, values_from = overnight_culture, values_fill = 0) %>%
+    pivot_longer(- r) %>%
+    mutate(r = str_c(r, "___overnight_culture"))
+
+data_w <- rbind(data_glycerol, data_overnight) %>%
+    mutate(value = log10(value + pseudoCount)) %>%
+    pivot_wider(id_cols = r, names_from = name, values_from = value) %>%
+    as.data.frame() %>% 
+    column_to_rownames('r') %>%
+    as.matrix() %>%
+    vegdist(method = "euclidean")
+
+pcoa_o <- cmdscale(data_w, k = 2) %>%
+    as.data.frame() %>%
+    rownames_to_column('r') %>%
+    as_tibble() %>%
+    rename(`PCo 1` = V1, `PCo 2` = V2) %>%
+    mutate(oxygen_condition = str_split_fixed(r, "___", 3)[, 3]) %>%
+    mutate(originalCommunity = str_split_fixed(r, "___", 3)[, 1]) %>%
+    mutate(sampleType = str_split_fixed(r, "___", 3)[, 2]) %>%
+    mutate(sampleType = ifelse(sampleType == "NA", 'stock', sampleType)) %>%
+    identity() %>%
+    left_join(met, by = c("originalCommunity" = "sampleID"))
+
+p <- ggplot() +
+    geom_point(data = pcoa_o, aes(x = `PCo 1`, y = `PCo 2`, shape = sampleType, color = oxygen_condition)) +
+    geom_line(data = pcoa_o, aes(x = `PCo 1`, y = `PCo 2`, group = originalCommunity), alpha = 0.3) +
+    scale_size_manual(values = c("glycerol_stock" = 3, 'overnight_culture' = 1)) +
+    theme_presentation() + 
+    facet_grid(type~.) +
+    xlab("PCo 1") +
+    ylab("PCo 2") +
+    NULL
+
+ggsave(
+    plot = p,
+    filename = "/g/scb/zeller/karcher/PRISMA/plots/220310_K3NHW/pcoa_overview_overnight_glycerol.pdf",
+    width = 4.00*1.2,
+    height = 4.75*1.2
+)
+
 
 
 data <- overnight_culture_scatters %>%
