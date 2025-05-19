@@ -502,14 +502,28 @@ pcoa_o <- cmdscale(data_w, k = 2) %>%
     mutate(sampleType = str_split_fixed(r, "___", 3)[, 2]) %>%
     mutate(sampleType = ifelse(sampleType == "NA", 'stock', sampleType)) %>%
     identity() %>%
-    left_join(met, by = c("originalCommunity" = "sampleID"))
+    left_join(met, by = c("originalCommunity" = "sampleID")) %>%
+    mutate(
+        type = case_when(
+            type == "Healthy adults" ~ "healthy adults",
+            type == "Healthy children" ~ "healthy children",
+            type == "Transplant patients" ~ "transplant patients",
+        )) %>%
+        mutate(type = factor(type, levels = c("healthy adults", "healthy children", "transplant patients"))) 
+
+cols_fuck <- c(
+    "healthy adults" =  "#2ca02c",
+    "healthy children" = "#1f77b4",
+    "transplant patients" =  "#ff7f0e"
+)
 
 p <- ggplot() +
-    geom_point(data = pcoa_o, aes(x = `PCo 1`, y = `PCo 2`, shape = sampleType, color = oxygen_condition)) +
+    geom_point(data = pcoa_o, aes(x = `PCo 1`, y = `PCo 2`, color = type, shape = oxygen_condition)) +
     geom_line(data = pcoa_o, aes(x = `PCo 1`, y = `PCo 2`, group = originalCommunity), alpha = 0.3) +
     scale_size_manual(values = c("glycerol_stock" = 3, 'overnight_culture' = 1)) +
     theme_presentation() + 
-    facet_grid(type~.) +
+    scale_color_manual(values = cols_fuck) +
+    #facet_grid(type~.) +
     xlab("PCo 1") +
     ylab("PCo 2") +
     NULL
@@ -518,7 +532,7 @@ ggsave(
     plot = p,
     filename = "/g/scb/zeller/karcher/PRISMA/plots/220310_K3NHW/pcoa_overview_overnight_glycerol.pdf",
     width = 4.00*1.2,
-    height = 4.75*1.2
+    height = 4.75*0.7
 )
 
 
