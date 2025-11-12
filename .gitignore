@@ -11,3 +11,6 @@ data/gtdbk_tax_r207.tab
 plots/KLGPG_221206/single_ind_pcoa_plots/*
 data/gtdb_idtaxa.tax
 data/ncbi_mapseq.tax
+data/PRISMA_WGS_profiles.csv
+data/PRISMA_16S_profiles.csv
+data/PRISMA_meta.csv

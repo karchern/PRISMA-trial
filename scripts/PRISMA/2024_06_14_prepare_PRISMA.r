@@ -328,11 +328,21 @@ outcomeInformation <- outcomeInformation %>%
         # cyp3a4star22 = v64_CYP3A4_22,
     ) %>%
     rename(all_of(model_covariates)) %>%
-    mutate(birthday = as.Date(birthday)) %>%
+    mutate(first_field = str_split_fixed(birthday, "[.]", n = 3)[, 1]) %>%
+    mutate(second_field = str_split_fixed(birthday, "[.]", n = 3)[, 2]) %>%
+    mutate(third_field = str_split_fixed(birthday, "[.]", n = 3)[, 3]) %>%
+    mutate(third_field = as.numeric(third_field)) %>%
+    mutate(third_field = ifelse(third_field < 20, str_c("20", as.character(third_field)), str_c('19', as.character(third_field)))) %>%
+    mutate(
+        birthday_new = str_c(first_field, second_field, third_field, sep = "-")
+    ) %>%
+    mutate(birthday_new = as.Date(birthday_new)) %>%
+    mutate(birthday = birthday_new) %>%
     mutate(age = age_calc(birthday, as.Date("2023-11-07"), "years")) %>%
     mutate(ageCategorical = ifelse(age > 18, "adult", 'non-adult'))
 
 stopifnot(all(outcomeInformation$patientID %in% profiles$PSN))
+stopifnot(all(profiles$PSN %in% outcomeInformation$patientID))
 ## [1]v4_cyp_genotype =  ";\"\";1;\"CYP3A5(*3) Positive\";2;\"CYP3A5(*3) Negative\""
 ## [2]v64_cyp_genotype_2 = ";\"\";1;\"CYP3A4(*22) Positive\";2;\"CYP3A4(*22) Negative\""
 ### Update: Information in codebook is wrong. They are already coded as True/False
@@ -678,6 +688,21 @@ clinicalMetadata <- outcomeInformation %>%
 
 # For reason that will become clear later on (essentially, in certain situations, I want to predict outcome at T from microbiome + metadata at T-1),
 # I hear distinguish between outcomeInformation and clinicalMetadata
+
+# 2025-11-12: Write out outcomeInformatio here for Saul, and be done.
+outcomeInformation <- outcomeInformation %>%
+    filter(!is.na(visitNumber))
+outcomeInformation %>%
+    write_csv(
+        here('data/PRISMA_meta.csv')
+    )
+
+profiles %>%
+    rename(patientID = PSN, visitNumber = visit) %>%
+    select(-sampleID) %>%
+    write_csv(
+        here('data/PRISMA_16S_profiles.csv')
+    )
 
 outcomeInformation <- outcomeInformation %>%
     ungroup() %>%
